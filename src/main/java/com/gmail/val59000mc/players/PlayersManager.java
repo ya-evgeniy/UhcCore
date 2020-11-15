@@ -391,17 +391,18 @@ public class PlayersManager{
 
 		Player player;
 		try {
-			player = uhcPlayer.getPlayer();player.getEquipment().clear();
+			player = uhcPlayer.getPlayer();
+			player.getEquipment().clear();
 			clearPlayerInventory(player);
 			player.setGameMode(GameMode.SPECTATOR);
-			for(PotionEffect effect : player.getActivePotionEffects())
-			{
+			for(PotionEffect effect : player.getActivePotionEffects()) {
 				player.removePotionEffect(effect.getType());
 			}
+			player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 200000, 0));
 			if(GameManager.getGameManager().getGameState().equals(GameState.DEATHMATCH)){
 				player.teleport(GameManager.getGameManager().getArena().getLoc());
 			}else{
-				player.teleport(GameManager.getGameManager().getLobby().getLoc());
+				player.teleport(new Location(Bukkit.getWorld(GameManager.getGameManager().getConfiguration().getOverworldUuid()), 0, 200, 0));
 			}
 		} catch (UhcPlayerNotOnlineException e) {
 			// Do nothing because DEAD is a safe state

@@ -453,7 +453,7 @@ public class GameManager{
 		listeners.add(new PingListener());
 		listeners.add(new BlockListener(configuration));
 		listeners.add(new WorldListener());
-		listeners.add(new PlayerMovementListener(playerManager));
+		listeners.add(new PlayerMovementListener(playerManager, configuration));
 		listeners.add(new EntityDamageListener(this));
 		if (lobbyPvpConfiguration.isEnabled()) {
 			listeners.add(new LobbyPvpListener(this, lobbyPvpManager));
