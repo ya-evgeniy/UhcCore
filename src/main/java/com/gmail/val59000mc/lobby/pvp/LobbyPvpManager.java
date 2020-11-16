@@ -1,5 +1,6 @@
 package com.gmail.val59000mc.lobby.pvp;
 
+import com.gmail.val59000mc.configuration.LobbyPvpConfiguration;
 import com.gmail.val59000mc.customitems.UhcItems;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.lobby.pvp.zone.Zone;
@@ -21,19 +22,24 @@ public class LobbyPvpManager {
     }
 
     public void addPlayer(Player player) {
+        player.setFoodLevel(7);
         this.playersInZone.add(player.getUniqueId());
 
-        this.gameManager.getLobbyPvpConfiguration().getEquipmentContainer().equip(player, true);
+        LobbyPvpConfiguration conf = this.gameManager.getLobbyPvpConfiguration();
+        conf.getEquipmentContainer().equip(player, true);
 
         for (PotionEffect effect : player.getActivePotionEffects()) player.removePotionEffect(effect.getType());
+        for (PotionEffect effect : conf.getEffects()) effect.apply(player);
     }
 
     public void removePlayer(Player player) {
         this.playersInZone.remove(player.getUniqueId());
 
         player.getInventory().clear();
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 99999999, 0));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 99999999, 0));
+        for (PotionEffect effect : player.getActivePotionEffects()) player.removePotionEffect(effect.getType());
+
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 99999999, 0, true, false));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 99999999, 0, true, false));
         player.setHealth(20);
         player.setExhaustion(20);
         player.setFoodLevel(20);

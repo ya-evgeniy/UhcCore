@@ -1,6 +1,7 @@
 package com.gmail.val59000mc.listeners;
 
 import com.gmail.val59000mc.events.UhcLobbyPlayerDamageByPlayerEvent;
+import com.gmail.val59000mc.events.UhcLobbyPlayerDamageEvent;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.game.GameState;
 import com.gmail.val59000mc.languages.Lang;
@@ -8,12 +9,14 @@ import com.gmail.val59000mc.players.PlayerState;
 import com.gmail.val59000mc.players.PlayersManager;
 import com.gmail.val59000mc.players.UhcPlayer;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.projectiles.ProjectileSource;
 
 public class PlayerDamageListener implements Listener{
 
@@ -27,7 +30,6 @@ public class PlayerDamageListener implements Listener{
 	
 	@EventHandler(priority=EventPriority.NORMAL)
 	public void onPlayerDamage(EntityDamageByEntityEvent event){
-
 		boolean skip = handleLobbyEntityDamageByEntityEvent(event);
 		if (skip) return;
 
@@ -48,6 +50,15 @@ public class PlayerDamageListener implements Listener{
 	private void handleAnyDamage(EntityDamageEvent event){
 		if(event.getEntity() instanceof Player){
 			Player player = (Player) event.getEntity();
+
+			if (gameManager.getGameState() == GameState.WAITING) {
+				UhcLobbyPlayerDamageEvent damageEvent = new UhcLobbyPlayerDamageEvent(player, event.getFinalDamage(), event.getCause());
+				Bukkit.getPluginManager().callEvent(damageEvent);
+
+				event.setCancelled(damageEvent.isCancelled());
+				if (damageEvent.isPassOriginal()) return;
+			}
+
 			PlayersManager pm = gameManager.getPlayersManager();
 			UhcPlayer uhcPlayer = pm.getUhcPlayer(player);
 
@@ -126,10 +137,27 @@ public class PlayerDamageListener implements Listener{
 
 	private boolean handleLobbyEntityDamageByEntityEvent(EntityDamageByEntityEvent event) {
 		if (event.getEntity().getType() != EntityType.PLAYER) return false;
-		if (event.getDamager().getType() != EntityType.PLAYER) return false;
-
 		Player player = (Player) event.getEntity();
-		Player damager = (Player) event.getDamager();
+
+		if (player.getGameMode() == GameMode.CREATIVE) return false;
+
+		Player damager;
+		if (event.getDamager() instanceof Player) {
+			damager = (Player) event.getDamager();
+		}
+		else if (event.getDamager() instanceof Projectile) {
+			Projectile projectile = (Projectile) event.getDamager();
+			ProjectileSource shooter = projectile.getShooter();
+			if (shooter instanceof Player) {
+				damager = (Player) shooter;
+			}
+			else {
+				return false;
+			}
+		}
+		else {
+			return false;
+		}
 
 		if (gameManager.getPvp()) return false;
 
