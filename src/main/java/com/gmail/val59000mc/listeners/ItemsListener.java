@@ -30,10 +30,7 @@ import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.inventory.BrewerInventory;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryView;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -52,12 +49,12 @@ public class ItemsListener implements Listener {
 		Player player = event.getPlayer();
 		GameManager gm = GameManager.getGameManager();
 		UhcPlayer uhcPlayer = gm.getPlayersManager().getUhcPlayer(player);
-		ItemStack hand = player.getItemInHand();
+		ItemStack hand = player.getInventory().getItemInMainHand();
 
 		if (GameItem.isGameItem(hand)){
 			event.setCancelled(true);
 			GameItem gameItem = GameItem.getGameItem(hand);
-			handleGameItemInteract(gameItem, player, uhcPlayer, hand);
+			if (event.getHand() == EquipmentSlot.HAND) handleGameItemInteract(gameItem, player, uhcPlayer, hand);
 			return;
 		}
 
@@ -230,9 +227,14 @@ public class ItemsListener implements Listener {
 				break;
 			case KIT_SELECTION:
 				GameManager gameManager = GameManager.getGameManager();
-
 				KitsManager kitsManager = gameManager.getKitsManager();
-				new KitSelectionInventory(kitsManager, uhcPlayer).openFor(player);
+
+				if (uhcPlayer.getKitUpgrades().isLoaded()) {
+					new KitSelectionInventory(kitsManager, uhcPlayer).openFor(player);
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "Твои киты еще не загружены, обратись к администратору! ");
+				}
 				break;
 			case CUSTOM_CRAFT_BOOK:
 				CraftsManager.openCraftBookInventory(player);

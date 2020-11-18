@@ -12,11 +12,13 @@
 	"database": {
 		"enabled": false,
 
+		"url": "jdbc:mysql://%s:%s/%s",
+
 		"ip": "",
-		"port": 25565,
+		"port": 3306,
 
 		"db": "",
-		"url": "jdbc:mysql://localhost:port/db",
+		"table": "uhccore_kit_upgrades",
 
 		"username": "",
 		"password": ""

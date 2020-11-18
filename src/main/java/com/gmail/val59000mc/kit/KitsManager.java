@@ -1,6 +1,7 @@
 package com.gmail.val59000mc.kit;
 
 import com.gmail.val59000mc.game.GameManager;
+import com.gmail.val59000mc.kit.db.DbKitUpgrades;
 import com.gmail.val59000mc.kit.table.KitTableRegistry;
 import com.gmail.val59000mc.kit.table.set.KitTableSet;
 import org.bukkit.entity.Player;
@@ -21,9 +22,11 @@ public class KitsManager {
     private final Map<String, KitTableSet> setById = new HashMap<>();
 
     private final @NotNull GameManager gameManager;
+    private final @NotNull DbKitUpgrades dbKitUpgrades;
 
     public KitsManager(@NotNull GameManager gameManager) {
         this.gameManager = gameManager;
+        this.dbKitUpgrades = new DbKitUpgrades(gameManager);
 
         this.groupById.put("default", new KitGroup("default", 1));
     }
@@ -100,6 +103,10 @@ public class KitsManager {
 
     public @NotNull GameManager getGameManager() {
         return gameManager;
+    }
+
+    public DbKitUpgrades getDbKitUpgrades() {
+        return dbKitUpgrades;
     }
 
 }

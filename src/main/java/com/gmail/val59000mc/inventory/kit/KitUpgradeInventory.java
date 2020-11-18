@@ -72,9 +72,9 @@ public class KitUpgradeInventory extends UhcInventoryContent {
 
         int yIndex = 5 / 2 - (levels.size() + 1) / 2;
 
-        this.setItem(0, yIndex++, new KitLevelInventoryItem(this, player, displayName, id, new KitUpgrade(0, 0), levels.size()));
+        this.setItem(0, yIndex++, new KitLevelInventoryItem(this, player, kit, new KitUpgrade(0, 0), levels.size()));
         for (KitUpgrade level : levels) {
-            this.setItem(0, yIndex++, new KitLevelInventoryItem(this, player, displayName, id, level, levels.size()));
+            this.setItem(0, yIndex++, new KitLevelInventoryItem(this, player, kit, level, levels.size()));
         }
     }
 

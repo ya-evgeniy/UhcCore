@@ -1,9 +1,12 @@
 package com.gmail.val59000mc.inventory.kit.item;
 
 import com.gmail.val59000mc.configuration.VaultManager;
+import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.inventory.UhcInventoryItem;
 import com.gmail.val59000mc.inventory.kit.KitUpgradeInventory;
+import com.gmail.val59000mc.kit.Kit;
 import com.gmail.val59000mc.kit.upgrade.KitUpgrade;
+import com.gmail.val59000mc.kit.upgrade.KitUpgrades;
 import com.gmail.val59000mc.players.UhcPlayer;
 import com.gmail.val59000mc.utils.RomanNumber;
 import com.gmail.val59000mc.utils.stack.ItemStackUtil;
@@ -20,27 +23,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class KitLevelInventoryItem implements UhcInventoryItem {
 
     private final KitUpgradeInventory inventory;
     private final UhcPlayer player;
-    private final String upgradeId;
+    private final Kit kit;
     private final KitUpgrade upgrade;
-    private final String kitName;
     private final int maxUpgradeLevel;
 
     public KitLevelInventoryItem(KitUpgradeInventory inventory,
                                  UhcPlayer player,
-                                 String kitName,
-                                 String upgradeId,
+                                 Kit kit,
                                  KitUpgrade upgrade,
                                  int maxUpgradeLevel
     ) {
         this.inventory = inventory;
         this.player = player;
-        this.kitName = kitName;
-        this.upgradeId = upgradeId;
+        this.kit = kit;
         this.upgrade = upgrade;
         this.maxUpgradeLevel = maxUpgradeLevel;
     }
@@ -50,7 +51,10 @@ public class KitLevelInventoryItem implements UhcInventoryItem {
         Player bukkitPlayer = Bukkit.getPlayer(this.player.getUuid());
         if (bukkitPlayer == null) return null;
 
-        int currentPlayerLevel = this.player.getKitUpgrades().getLevel(upgradeId);
+        KitUpgrades upgrades = kit.getUpgrades();
+        if (upgrades == null) return null;
+
+        int currentPlayerLevel = this.player.getKitUpgrades().getLevel(upgrades.getId());
         int nextPlayerLevel = currentPlayerLevel + 1;
 
         int upgradeDisplayLevel = upgrade.getLevel() + 1;
@@ -85,7 +89,7 @@ public class KitLevelInventoryItem implements UhcInventoryItem {
             lore.add("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"Предыдущее улучшение\",\"color\":\"red\"},{\"text\":\" не приобретено\",\"color\":\"red\"}]");
         }
 
-        ItemStackUtil.setDisplayName(stack, String.format("%s%s%s %s", ChatColor.RESET, ChatColor.GRAY, kitName, RomanNumber.fromDecimal(upgradeDisplayLevel)));
+        ItemStackUtil.setDisplayName(stack, String.format("%s%s%s %s", ChatColor.RESET, ChatColor.GRAY, kit.getDisplayName(), RomanNumber.fromDecimal(upgradeDisplayLevel)));
         ItemStackUtil.setJsonLore(stack, lore);
 
         return stack;
@@ -95,16 +99,21 @@ public class KitLevelInventoryItem implements UhcInventoryItem {
     public void on(@NotNull InventoryClickEvent event) {
         if (event.getAction() != InventoryAction.PICKUP_ALL) return;
 
+        KitUpgrades upgrades = kit.getUpgrades();
+        if (upgrades == null) return;
+
         Player bukkitPlayer = Bukkit.getPlayer(this.player.getUuid());
         if (bukkitPlayer == null) return;
 
-        int currentPlayerLevel = this.player.getKitUpgrades().getLevel(upgradeId);
+        int currentPlayerLevel = this.player.getKitUpgrades().getLevel(upgrades.getId());
         int nextPlayerLevel = currentPlayerLevel + 1;
 
         if (nextPlayerLevel == upgrade.getLevel() && upgrade.getCost() <= VaultManager.getPlayerMoney(bukkitPlayer)) {
-            this.player.getKitUpgrades().incrementLevel(this.upgradeId);
+            int newLevel = this.player.getKitUpgrades().incrementLevel(upgrades.getId());
             VaultManager.removeMoney(bukkitPlayer, upgrade.getCost());
             inventory.updateUpgrades();
+
+            GameManager.getGameManager().getKitsManager().getDbKitUpgrades().save(player, kit, newLevel);
 
             if (upgrade.getLevel() == maxUpgradeLevel) {
                 bukkitPlayer.playSound(

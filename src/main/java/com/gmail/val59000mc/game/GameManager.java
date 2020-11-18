@@ -127,6 +127,10 @@ public class GameManager{
 		return lobbyPvpConfiguration;
 	}
 
+	public KitsConfiguration getKitsConfiguration() {
+		return kitsConfiguration;
+	}
+
 	public UhcWorldBorder getWorldBorder() {
 		return worldBorder;
 	}
@@ -329,6 +333,8 @@ public class GameManager{
 		setGameState(GameState.WAITING);
 		Bukkit.getLogger().info(Lang.DISPLAY_MESSAGE_PREFIX+" Players are now allowed to join");
 		Bukkit.getScheduler().scheduleSyncDelayedTask(UhcCore.getPlugin(), new PreStartThread(this),0);
+
+		kitsManager.getDbKitUpgrades().start();
 	}
 
 	public void startGame(){

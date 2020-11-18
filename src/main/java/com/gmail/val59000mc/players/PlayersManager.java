@@ -168,6 +168,10 @@ public class PlayersManager{
     public synchronized UhcPlayer newUhcPlayer(UUID uuid, String name){
         UhcPlayer newPlayer = new UhcPlayer(uuid, name);
         getPlayersList().add(newPlayer);
+
+		GameManager gameManager = GameManager.getGameManager();
+		gameManager.getKitsManager().getDbKitUpgrades().load(newPlayer);
+
         return newPlayer;
     }
 

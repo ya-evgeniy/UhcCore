@@ -38,7 +38,7 @@ public class KitTableEntrySet implements KitTableEntry {
 
     @Override
     public int getWeight() {
-        return this.weight;
+        return this.weight == 0 ? 1 : this.weight;
     }
 
     @Override

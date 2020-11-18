@@ -8,6 +8,15 @@ import java.util.Map;
 public class PlayerKitUpgrades {
 
     private final Map<String, Integer> levelById = new HashMap<>();
+    private boolean loaded = false;
+
+    public boolean isLoaded() {
+        return loaded;
+    }
+
+    public void setLoaded(boolean value) {
+        this.loaded = value;
+    }
 
     public int getLevel(@NotNull String id) {
         return this.levelById.getOrDefault(id, 0);
