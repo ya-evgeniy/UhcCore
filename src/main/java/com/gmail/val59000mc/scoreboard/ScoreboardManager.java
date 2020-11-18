@@ -301,7 +301,7 @@ public class ScoreboardManager {
             if (uhcPlayer.getKit() == null){
                 returnString = returnString.replace("%kit%", Lang.ITEMS_KIT_SCOREBOARD_NO_KIT);
             }else{
-                returnString = returnString.replace("%kit%", uhcPlayer.getKit().getName());
+                returnString = returnString.replace("%kit%", uhcPlayer.getKit().getDisplayName());
             }
         }
 

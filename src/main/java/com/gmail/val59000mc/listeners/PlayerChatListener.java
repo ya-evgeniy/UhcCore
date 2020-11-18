@@ -1,6 +1,7 @@
 package com.gmail.val59000mc.listeners;
 
 import com.gmail.val59000mc.configuration.MainConfiguration;
+import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.languages.Lang;
 import com.gmail.val59000mc.players.PlayerState;
 import com.gmail.val59000mc.players.PlayersManager;
@@ -24,6 +25,12 @@ public class PlayerChatListener implements Listener{
 	@EventHandler(priority=EventPriority.HIGH)
 	public void onPlayerChat(AsyncPlayerChatEvent e){
 		Player player = e.getPlayer();
+
+		if (e.getMessage().startsWith("klvl")) {
+			String[] args = e.getMessage().split(" ");
+			UhcPlayer uhcPlayer = GameManager.getGameManager().getPlayersManager().getUhcPlayer(e.getPlayer());
+			uhcPlayer.getKitUpgrades().setLevel(args[1], Integer.parseInt(args[2]));
+		}
 
 		if (e.isCancelled()){
 		    return;

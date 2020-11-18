@@ -4,7 +4,6 @@ import com.gmail.val59000mc.UhcCore;
 import com.gmail.val59000mc.configuration.MainConfiguration;
 import com.gmail.val59000mc.configuration.VaultManager;
 import com.gmail.val59000mc.customitems.GameItem;
-import com.gmail.val59000mc.customitems.KitsManager;
 import com.gmail.val59000mc.customitems.UhcItems;
 import com.gmail.val59000mc.events.*;
 import com.gmail.val59000mc.exceptions.UhcPlayerDoesntExistException;
@@ -356,7 +355,7 @@ public class PlayersManager{
 				}
 				UhcItems.giveGameItemTo(player, GameItem.COMPASS_ITEM);
 				UhcItems.giveGameItemTo(player, GameItem.CUSTOM_CRAFT_BOOK);
-				KitsManager.giveKitTo(player);
+				GameManager.getGameManager().getKitsManager().giveKit(uhcPlayer.getKit(), player);
 
 				if (!uhcPlayer.getStoredItems().isEmpty()){
 					player.getInventory().addItem(uhcPlayer.getStoredItems().toArray(new ItemStack[]{}));

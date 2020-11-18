@@ -5,6 +5,8 @@ import com.gmail.val59000mc.customitems.*;
 import com.gmail.val59000mc.exceptions.UhcTeamException;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.game.GameState;
+import com.gmail.val59000mc.inventory.kit.KitSelectionInventory;
+import com.gmail.val59000mc.kit.KitsManager;
 import com.gmail.val59000mc.languages.Lang;
 import com.gmail.val59000mc.players.PlayerState;
 import com.gmail.val59000mc.players.PlayersManager;
@@ -118,19 +120,20 @@ public class ItemsListener implements Listener {
 		}
 		
 		// Click on a player head to join a team
-		if(event.getView().getTitle().equals(Lang.ITEMS_KIT_INVENTORY)){
-			if(KitsManager.isKitItem(item)){
-				event.setCancelled(true);
-				Kit kit = KitsManager.getKitByName(item.getItemMeta().getDisplayName());
-				if(kit.canBeUsedBy(player, gm.getConfiguration())){
-					uhcPlayer.setKit(kit);
-					uhcPlayer.sendMessage(Lang.ITEMS_KIT_SELECTED.replace("%kit%", kit.getName()));
-				}else{
-					uhcPlayer.sendMessage(Lang.ITEMS_KIT_NO_PERMISSION);
-				}
-				player.closeInventory();
-			}
-		}
+//		if(event.getView().getTitle().equals(Lang.ITEMS_KIT_INVENTORY)){
+//			if(KitsManager.isKitItem(item)){
+//				event.setCancelled(true);
+//				Kit kit = KitsManager.getKitByName(item.getItemMeta().getDisplayName());
+//				if(kit.canBeUsedBy(player, gm.getConfiguration())){
+//					uhcPlayer.setKit(kit);
+//					uhcPlayer.sendMessage(Lang.ITEMS_KIT_SELECTED.replace("%kit%", kit.getName()));
+//				}else{
+//					uhcPlayer.sendMessage(Lang.ITEMS_KIT_NO_PERMISSION);
+//				}
+//				player.closeInventory();
+//			}
+//		}
+		// fixme
 
 		if (UhcItems.isTeamSkullItem(item)){
 			event.setCancelled(true);
@@ -226,7 +229,10 @@ public class ItemsListener implements Listener {
 				UhcItems.openTeamSettingsInventory(player);
 				break;
 			case KIT_SELECTION:
-				KitsManager.openKitSelectionInventory(player);
+				GameManager gameManager = GameManager.getGameManager();
+
+				KitsManager kitsManager = gameManager.getKitsManager();
+				new KitSelectionInventory(kitsManager, uhcPlayer).openFor(player);
 				break;
 			case CUSTOM_CRAFT_BOOK:
 				CraftsManager.openCraftBookInventory(player);

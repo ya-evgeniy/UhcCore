@@ -1,0 +1,25 @@
+{
+
+	"enabled": true,
+
+	"groups": [
+		{
+			"id": "sponsor",
+			"lines": 1
+		}
+	],
+
+	"database": {
+		"enabled": false,
+
+		"ip": "",
+		"port": 25565,
+
+		"db": "",
+		"url": "jdbc:mysql://localhost:port/db",
+
+		"username": "",
+		"password": ""
+	}
+
+}
