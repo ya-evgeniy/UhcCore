@@ -82,13 +82,19 @@ public class DbKitUpgrades {
             return false;
         }
 
-        try(Statement statement = connection.createStatement()) {
-
+        try {
+            Statement statement = connection.createStatement();
             executor.submit(() -> {
                 try {
                     consumer.accept(statement);
                 } catch (SQLException e) {
                     UhcCore.getPlugin().getLogger().log(Level.SEVERE, "Kit: statement execution", e);
+                }
+
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                    UhcCore.getPlugin().getLogger().log(Level.SEVERE, "Failed to close statement", e);
                 }
             });
 
