@@ -82,8 +82,7 @@ public class DbKitUpgrades {
             return false;
         }
 
-        try {
-            Statement statement = connection.createStatement();
+        try(Statement statement = connection.createStatement()) {
 
             executor.submit(() -> {
                 try {
