@@ -111,6 +111,10 @@ public class KitsManager {
         return new ArrayList<>(this.groupById.values());
     }
 
+    public @NotNull List<Kit> getKits() {
+        return new ArrayList<>(this.kitById.values());
+    }
+
     public int countKits() {
         return this.kitById.size();
     }
