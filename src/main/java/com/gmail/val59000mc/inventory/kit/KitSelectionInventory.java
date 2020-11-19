@@ -13,6 +13,7 @@ import com.gmail.val59000mc.players.UhcPlayer;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -114,6 +115,17 @@ public class KitSelectionInventory extends UhcInventoryContent {
             lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"ЛКМ\",\"color\":\"green\"},{\"text\":\" - чтобы выбрать набор\",\"color\":\"light_gray\"}]");
             lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"ПКМ\",\"color\":\"green\"},{\"text\":\" - чтобы прокачать или посмотреть набор\",\"color\":\"light_gray\"}]");
 
+            boolean hasPermission = false;
+            try {
+                hasPermission = this.player.getPlayer().hasPermission("uhccore.kit." + kit.getId());
+            } catch (UhcPlayerNotOnlineException ignored) {
+            }
+
+            if (!hasPermission) {
+                lore.add("[\"\"]");
+                lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"Данный набор недоступен для тебя\",\"color\":\"red\"}]");
+            }
+
             displayItems.setLore(meta, lore);
 
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_POTION_EFFECTS);
@@ -124,12 +136,25 @@ public class KitSelectionInventory extends UhcInventoryContent {
 
         @Override
         public void on(@NotNull InventoryClickEvent event) {
+            HumanEntity humanEntity = event.getWhoClicked();
+            if (!(humanEntity instanceof Player)) {
+                return;
+            }
+            Player bukkitPlayer = (Player) humanEntity;
+
             if (event.getAction() == InventoryAction.PICKUP_HALF) {
-                KitUpgradeInventory inventory = new KitUpgradeInventory(this.inventory.kitsManager, player, kit);
-                inventory.openFor(event.getWhoClicked());
+                KitUpgradeInventory inventory = new KitUpgradeInventory(this.inventory.kitsManager, this.player, kit);
+                inventory.openFor(bukkitPlayer);
             }
             else if (event.getAction() == InventoryAction.PICKUP_ALL) {
-                player.setKit(kit);
+
+                boolean hasPermission = bukkitPlayer.hasPermission("uhccore.kit." + kit.getId());
+                if (!hasPermission) {
+                    bukkitPlayer.playSound(bukkitPlayer.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                    return;
+                }
+
+                this.player.setKit(kit);
                 try {
                     Player player = this.player.getPlayer();
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 2, 2);

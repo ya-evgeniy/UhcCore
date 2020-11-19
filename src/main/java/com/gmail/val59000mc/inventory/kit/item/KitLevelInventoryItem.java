@@ -1,6 +1,7 @@
 package com.gmail.val59000mc.inventory.kit.item;
 
 import com.gmail.val59000mc.configuration.VaultManager;
+import com.gmail.val59000mc.exceptions.UhcPlayerNotOnlineException;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.inventory.UhcInventoryItem;
 import com.gmail.val59000mc.inventory.kit.KitUpgradeInventory;
@@ -62,7 +63,6 @@ public class KitLevelInventoryItem implements UhcInventoryItem {
         ItemStack stack = new ItemStack(Material.AIR);
 
         List<String> lore = new ArrayList<>();
-//        lore.add("[\"\"]");
         if (upgrade.getCost() > 0) {
             lore.add(
                     String.format("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"Стоимость: \",\"color\":\"gray\"},{\"text\":\"%d\",\"color\":\"gold\"}]", upgrade.getCost())
@@ -89,6 +89,12 @@ public class KitLevelInventoryItem implements UhcInventoryItem {
             lore.add("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"Предыдущее улучшение\",\"color\":\"red\"},{\"text\":\" не приобретено\",\"color\":\"red\"}]");
         }
 
+        boolean hasPermission = bukkitPlayer.hasPermission("uhccore.kit." + kit.getId());
+        if (!hasPermission) {
+            lore.add("[\"\"]");
+            lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"Данное улучшение недоступно для тебя\",\"color\":\"red\"}]");
+        }
+
         ItemStackUtil.setDisplayName(stack, String.format("%s%s%s %s", ChatColor.RESET, ChatColor.GRAY, kit.getDisplayName(), RomanNumber.fromDecimal(upgradeDisplayLevel)));
         ItemStackUtil.setJsonLore(stack, lore);
 
@@ -109,6 +115,13 @@ public class KitLevelInventoryItem implements UhcInventoryItem {
         int nextPlayerLevel = currentPlayerLevel + 1;
 
         if (nextPlayerLevel == upgrade.getLevel() && upgrade.getCost() <= VaultManager.getPlayerMoney(bukkitPlayer)) {
+
+            boolean hasPermission = bukkitPlayer.hasPermission("uhccore.kit." + kit.getId());
+            if (!hasPermission) {
+                bukkitPlayer.playSound(bukkitPlayer.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+                return;
+            }
+
             int newLevel = this.player.getKitUpgrades().incrementLevel(upgrades.getId());
             VaultManager.removeMoney(bukkitPlayer, upgrade.getCost());
             inventory.updateUpgrades();
