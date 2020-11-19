@@ -1,14 +1,17 @@
 package com.gmail.val59000mc.kit;
 
+import com.gmail.val59000mc.exceptions.UhcPlayerNotOnlineException;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.kit.db.DbKitUpgrades;
 import com.gmail.val59000mc.kit.table.KitTableRegistry;
 import com.gmail.val59000mc.kit.table.set.KitTableSet;
+import com.gmail.val59000mc.players.UhcPlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class KitsManager {
 
@@ -72,6 +75,21 @@ public class KitsManager {
 
     public @Nullable Kit getKit(@NotNull String kitId) {
         return this.kitById.get(kitId);
+    }
+
+    public @Nullable Kit getRandomKit(@NotNull UhcPlayer player) {
+        try {
+            Player bukkitPlayer = player.getPlayer();
+            List<Kit> availableKits = this.kitById.values().stream()
+                    .filter(kit -> bukkitPlayer.hasPermission("uhccore.kit." + kit.getId()))
+                    .collect(Collectors.toList());
+
+            if (availableKits.isEmpty()) return null;
+            int index = RANDOM.nextInt(availableKits.size());
+            return availableKits.get(index);
+        } catch (UhcPlayerNotOnlineException ignore) {
+            return null;
+        }
     }
 
     public @Nullable KitTableSet getSet(@NotNull String setId) {

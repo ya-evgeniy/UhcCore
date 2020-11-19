@@ -12,6 +12,8 @@ import com.gmail.val59000mc.exceptions.UhcPlayerNotOnlineException;
 import com.gmail.val59000mc.exceptions.UhcTeamException;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.game.GameState;
+import com.gmail.val59000mc.kit.Kit;
+import com.gmail.val59000mc.kit.KitsManager;
 import com.gmail.val59000mc.languages.Lang;
 import com.gmail.val59000mc.scenarios.Scenario;
 import com.gmail.val59000mc.scenarios.ScenarioManager;
@@ -359,7 +361,13 @@ public class PlayersManager{
 				}
 				UhcItems.giveGameItemTo(player, GameItem.COMPASS_ITEM);
 				UhcItems.giveGameItemTo(player, GameItem.CUSTOM_CRAFT_BOOK);
-				GameManager.getGameManager().getKitsManager().giveKit(uhcPlayer.getKit(), player);
+
+				KitsManager kitsManager = GameManager.getGameManager().getKitsManager();
+
+				Kit kit = uhcPlayer.getKit();
+				if (kit == null) kit = kitsManager.getRandomKit(uhcPlayer);
+
+				kitsManager.giveKit(kit, player);
 
 				if (!uhcPlayer.getStoredItems().isEmpty()){
 					player.getInventory().addItem(uhcPlayer.getStoredItems().toArray(new ItemStack[]{}));
