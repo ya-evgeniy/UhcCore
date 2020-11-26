@@ -94,6 +94,14 @@ public class LobbyPvpListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
+    public void on(PlayerFishEvent event) {
+        if (!lobbyPvpManager.inZone(event.getPlayer().getUniqueId())) return;
+        if (gameManager.getGameState() != GameState.WAITING) return;
+        
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
     public void on(PlayerMoveEvent event) {
         handleMove(event.getPlayer(), event.getFrom(), event.getTo(), true);
     }
