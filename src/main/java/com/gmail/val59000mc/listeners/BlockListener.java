@@ -67,7 +67,7 @@ public class BlockListener implements Listener{
 		event.setDropItems(false);
 
 		ItemStack mainHandItem = event.getPlayer().getInventory().getItemInMainHand();
-		if (!lootConf.getMiningTools().contains(mainHandItem.getType())) return;
+		if (!lootConf.getMiningTools().isEmpty() && !lootConf.getMiningTools().contains(mainHandItem.getType())) return;
 
 		Location centerBlockLocation = breakingBlock.getLocation().add(0.5, 0.5, 0.5);
 		event.setExpToDrop(lootConf.getAddXp());
