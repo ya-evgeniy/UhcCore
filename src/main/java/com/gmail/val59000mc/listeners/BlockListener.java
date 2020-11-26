@@ -7,11 +7,9 @@ import com.gmail.val59000mc.customitems.UhcItems;
 import com.gmail.val59000mc.languages.Lang;
 import com.gmail.val59000mc.utils.RandomUtils;
 import com.gmail.val59000mc.utils.UniversalMaterial;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -19,6 +17,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,18 +57,25 @@ public class BlockListener implements Listener{
 		}
 	}
 
-	private void handleBlockLoot(BlockBreakEvent event){
-		Material material = event.getBlock().getType();
-		if(blockLoots.containsKey(material)){
-			BlockLootConfiguration lootConfig = blockLoots.get(material);
-			Location loc = event.getBlock().getLocation().add(.5,.5,.5);
-			event.getBlock().setType(Material.AIR);
-			event.setExpToDrop(lootConfig.getAddXp());
-			loc.getWorld().dropItem(loc, lootConfig.getLoot().clone());
-			if (lootConfig.getAddXp() > 0) {
-				UhcItems.spawnExtraXp(loc, lootConfig.getAddXp());
-			}
-		}
+	private void handleBlockLoot(BlockBreakEvent event) {
+		Block breakingBlock = event.getBlock();
+		Material material = breakingBlock.getType();
+
+		BlockLootConfiguration lootConf = this.blockLoots.get(material);
+		if (lootConf == null) return;
+
+		event.setDropItems(false);
+
+		ItemStack mainHandItem = event.getPlayer().getInventory().getItemInMainHand();
+		if (!lootConf.getMiningTools().contains(mainHandItem.getType())) return;
+
+		Location centerBlockLocation = breakingBlock.getLocation().add(0.5, 0.5, 0.5);
+		event.setExpToDrop(lootConf.getAddXp());
+
+		World world = centerBlockLocation.getWorld();
+		if (world != null) world.dropItemNaturally(centerBlockLocation, lootConf.getLoot().clone());
+
+		if (lootConf.getAddXp() > 0) UhcItems.spawnExtraXp(centerBlockLocation, lootConf.getAddXp());
 	}
 
 	private void handleShearedLeaves(BlockBreakEvent e){
