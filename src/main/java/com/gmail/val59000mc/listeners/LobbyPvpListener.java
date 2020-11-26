@@ -99,6 +99,7 @@ public class LobbyPvpListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void on(PlayerFishEvent event) {
+        if (event.getState() != PlayerFishEvent.State.CAUGHT_FISH) return;
         if (!lobbyPvpManager.inZone(event.getPlayer().getUniqueId())) return;
         if (gameManager.getGameState() != GameState.WAITING) return;
         
