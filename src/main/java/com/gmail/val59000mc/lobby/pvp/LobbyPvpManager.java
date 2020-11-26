@@ -10,6 +10,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public class LobbyPvpManager {
 
@@ -48,6 +49,10 @@ public class LobbyPvpManager {
         UhcItems.giveLobbyItemsTo(player);
     }
 
+    public void justRemove(UUID uniqueId) {
+        this.playersInZone.remove(uniqueId);
+    }
+
     public boolean inZone(UUID uniqueId) {
         return playersInZone.contains(uniqueId);
     }
@@ -64,6 +69,10 @@ public class LobbyPvpManager {
                 location.getY(),
                 location.getZ()
         ));
+    }
+
+    public Stream<UUID> stream() {
+        return this.playersInZone.stream();
     }
 
 }

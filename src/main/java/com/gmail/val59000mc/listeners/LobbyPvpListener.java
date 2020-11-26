@@ -22,6 +22,10 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 public class LobbyPvpListener implements Listener {
 
     private GameManager gameManager;
@@ -94,6 +98,14 @@ public class LobbyPvpListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
+    public void on(PlayerFishEvent event) {
+        if (!lobbyPvpManager.inZone(event.getPlayer().getUniqueId())) return;
+        if (gameManager.getGameState() != GameState.WAITING) return;
+        
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
     public void on(PlayerMoveEvent event) {
         handleMove(event.getPlayer(), event.getFrom(), event.getTo(), true);
     }
@@ -147,6 +159,14 @@ public class LobbyPvpListener implements Listener {
     public void on(UhcGameStateChangedEvent event) {
         if (event.getNewGameState().ordinal() > GameState.WAITING.ordinal()) {
             HandlerList.unregisterAll(this);
+
+            List<Player> playersInZone = lobbyPvpManager.stream().map(Bukkit::getPlayer).filter(Objects::nonNull).collect(Collectors.toList());
+            for (Player player : playersInZone) {
+                lobbyPvpManager.justRemove(player.getUniqueId());
+                player.getInventory().clear();
+                player.setFoodLevel(20);
+                player.setSaturation(20);
+            }
         }
     }
 
