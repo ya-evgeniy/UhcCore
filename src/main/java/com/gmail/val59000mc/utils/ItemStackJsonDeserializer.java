@@ -1,9 +1,6 @@
 package com.gmail.val59000mc.utils;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
+import com.google.gson.*;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
@@ -11,17 +8,58 @@ import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.Damageable;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.inventory.meta.*;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionEffectTypeWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ItemStackJsonDeserializer {
-    
+
+    public static final Map<String, PotionEffectType> POTION_EFFECT_TYPE_BY_MC_NAME;
+    public static final Pattern DURATION_PATTERN = Pattern.compile("(((?<d>\\d+)[d])?((?<h>\\d+)[h])?((?<m>\\d+)[m])?((?<s>\\d+)[s])?((?<t>\\d+)[t])?)");
+
+    static {
+        Map<String, PotionEffectType> potions = new HashMap<>();
+        potions.put("speed", PotionEffectType.SPEED);
+        potions.put("slowness", PotionEffectType.SLOW);
+        potions.put("haste", PotionEffectType.FAST_DIGGING);
+        potions.put("mining_fatigue", PotionEffectType.SLOW_DIGGING);
+        potions.put("strength", PotionEffectType.INCREASE_DAMAGE);
+        potions.put("instant_health", PotionEffectType.HEAL);
+        potions.put("instant_damage", PotionEffectType.HARM);
+        potions.put("jump_boost", PotionEffectType.JUMP);
+        potions.put("nausea", PotionEffectType.CONFUSION);
+        potions.put("regeneration", PotionEffectType.REGENERATION);
+        potions.put("resistance", PotionEffectType.DAMAGE_RESISTANCE);
+        potions.put("fire_resistance", PotionEffectType.FIRE_RESISTANCE);
+        potions.put("water_breathing", PotionEffectType.WATER_BREATHING);
+        potions.put("invisibility", PotionEffectType.INVISIBILITY);
+        potions.put("blindness", PotionEffectType.BLINDNESS);
+        potions.put("night_vision", PotionEffectType.NIGHT_VISION);
+        potions.put("hunger", PotionEffectType.HUNGER);
+        potions.put("weakness", PotionEffectType.WEAKNESS);
+        potions.put("poison", PotionEffectType.POISON);
+        potions.put("wither", PotionEffectType.WITHER);
+        potions.put("health_boost", PotionEffectType.HEALTH_BOOST);
+        potions.put("absorption", PotionEffectType.ABSORPTION);
+        potions.put("saturation", PotionEffectType.SATURATION);
+        potions.put("glowing", PotionEffectType.GLOWING);
+        potions.put("levitation", PotionEffectType.LEVITATION);
+        potions.put("luck", PotionEffectType.LUCK);
+        potions.put("unluck", PotionEffectType.UNLUCK);
+        potions.put("slow_falling", PotionEffectType.SLOW_FALLING);
+        potions.put("conduit_power", PotionEffectType.CONDUIT_POWER);
+        potions.put("dolphins_grace", PotionEffectType.DOLPHINS_GRACE);
+        potions.put("bad_omen", PotionEffectType.BAD_OMEN);
+        potions.put("hero_of_the_village", PotionEffectType.HERO_OF_THE_VILLAGE);
+        POTION_EFFECT_TYPE_BY_MC_NAME = Collections.unmodifiableMap(potions);
+    }
+
     public static ItemStack deserializeItemStack(@NotNull JsonElement element) throws JsonParseException {
         if (!element.isJsonObject()) throw new JsonParseException("element is not a Object");
         JsonObject object = element.getAsJsonObject();
@@ -71,7 +109,16 @@ public class ItemStackJsonDeserializer {
                     break;
                 case "enchantments":
                     Map<Enchantment, Integer> enchantments = deserializeEnchantments(value);
-                    stack.addUnsafeEnchantments(enchantments);
+                    meta = stack.getItemMeta();
+                    if (meta instanceof EnchantmentStorageMeta) {
+                        EnchantmentStorageMeta enchantmentStorageMeta = (EnchantmentStorageMeta) meta;
+                        for (Map.Entry<Enchantment, Integer> enchantmentEntry : enchantments.entrySet()) {
+                            enchantmentStorageMeta.addStoredEnchant(enchantmentEntry.getKey(), enchantmentEntry.getValue(), true);
+                        }
+                    }
+                    else {
+                        stack.addUnsafeEnchantments(enchantments);
+                    }
                     break;
                 case "potion_effects":
                     List<PotionEffect> potionEffects = deserializePotionEffects(value);
@@ -82,6 +129,15 @@ public class ItemStackJsonDeserializer {
                             potionMeta.addCustomEffect(effect, true);
                         }
                         stack.setItemMeta(meta);
+                    }
+                    break;
+                case "effects":
+                    List<PotionEffect> effects = deserializeEffects(value);
+                    meta = stack.getItemMeta();
+                    if (meta instanceof SuspiciousStewMeta) {
+                        SuspiciousStewMeta suspiciousStewMeta = (SuspiciousStewMeta) meta;
+                        for (PotionEffect effect : effects) suspiciousStewMeta.addCustomEffect(effect, true);
+                        stack.setItemMeta(suspiciousStewMeta);
                     }
                     break;
                 case "attribute_modifiers":
@@ -152,18 +208,48 @@ public class ItemStackJsonDeserializer {
             JsonElement lvlElement = object.get("lvl");
             if (lvlElement == null || !lvlElement.isJsonPrimitive()) throw new JsonParseException("Potion effect lvl is not a primitive");
 
-            JsonElement particlesElement = object.get("particles");
-            boolean particles = particlesElement != null && !particlesElement.isJsonPrimitive() && particlesElement.getAsBoolean();
+            JsonElement particlesElement = object.get("show_particles");
+            boolean particles = particlesElement == null || particlesElement.isJsonPrimitive() && particlesElement.getAsBoolean();
 
             String id = idElement.getAsString();
-            int duration = durationElement.getAsInt();
+            int duration = deserializeDuration(durationElement.getAsJsonPrimitive());
             int lvl = lvlElement.getAsInt();
 
-            PotionEffectType type = PotionEffectType.getByName(id);
-            if (type == null) type = PotionEffectType.getByName(id.substring("minecraft:".length()));
+            PotionEffectType type = POTION_EFFECT_TYPE_BY_MC_NAME.get(id);
+            if (type == null) type = POTION_EFFECT_TYPE_BY_MC_NAME.get(id.substring("minecraft:".length()));
             if (type == null) throw new JsonParseException("Unknown potion id: " + id);
 
             PotionEffect effect = new PotionEffect(type, duration, lvl, true, particles);
+            result.add(effect);
+        }
+
+        return result;
+    }
+
+    public static List<PotionEffect> deserializeEffects(@NotNull JsonElement element) throws JsonParseException {
+        if (!element.isJsonArray()) throw new JsonParseException("Effects element is not a array");
+        JsonArray array = element.getAsJsonArray();
+
+        List<PotionEffect> result = new ArrayList<>();
+
+        for (JsonElement potionEffect : array) {
+            if (!potionEffect.isJsonObject()) throw new JsonParseException("Potion is not a Object");
+            JsonObject object = potionEffect.getAsJsonObject();
+
+            JsonElement idElement = object.get("id");
+            if (idElement == null || !idElement.isJsonPrimitive()) throw new JsonParseException("Effect id is not a primitive");
+
+            JsonElement durationElement = object.get("duration");
+            if (durationElement == null || !durationElement.isJsonPrimitive()) throw new JsonParseException("Effect duration is not a primitive");
+
+            String id = idElement.getAsString();
+            int duration = deserializeDuration(durationElement.getAsJsonPrimitive());
+
+            PotionEffectType type = POTION_EFFECT_TYPE_BY_MC_NAME.get(id);
+            if (type == null) type = POTION_EFFECT_TYPE_BY_MC_NAME.get(id.substring("minecraft:".length()));
+            if (type == null) throw new JsonParseException("Unknown potion id: " + id);
+
+            PotionEffect effect = new PotionEffect(type, duration, 1, true, true);
             result.add(effect);
         }
 
@@ -228,6 +314,28 @@ public class ItemStackJsonDeserializer {
         }
 
         return result;
+    }
+
+    private static int deserializeDuration(JsonPrimitive primitive) {
+        if (primitive.isNumber()) return primitive.getAsInt();
+        String stringDuration = primitive.getAsString();
+        Matcher durationMatcher = DURATION_PATTERN.matcher(stringDuration);
+        if (durationMatcher.find()) {
+            String strDays = durationMatcher.group("d");
+            String strHours = durationMatcher.group("h");
+            String strMinutes = durationMatcher.group("m");
+            String strSeconds = durationMatcher.group("s");
+            String strTicks = durationMatcher.group("t");
+
+            int days = strDays == null ? 0 : Integer.parseInt(strDays);
+            int hours = strDays == null ? 0 : Integer.parseInt(strHours);
+            int minutes = strDays == null ? 0 : Integer.parseInt(strMinutes);
+            int seconds = strDays == null ? 0 : Integer.parseInt(strSeconds);
+            int ticks = strDays == null ? 0 : Integer.parseInt(strTicks);
+
+            return ((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 20 + ticks);
+        }
+        return -1;
     }
 
 }
