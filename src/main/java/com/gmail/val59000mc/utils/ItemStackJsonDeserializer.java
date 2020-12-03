@@ -21,6 +21,8 @@ import java.util.regex.Pattern;
 public class ItemStackJsonDeserializer {
 
     public static final Map<String, PotionEffectType> POTION_EFFECT_TYPE_BY_MC_NAME;
+    public static final Map<String, Enchantment> ENCHANTMENT_BY_MC_NAME;
+
     public static final Pattern DURATION_PATTERN = Pattern.compile("(((?<d>\\d+)[d])?((?<h>\\d+)[h])?((?<m>\\d+)[m])?((?<s>\\d+)[s])?((?<t>\\d+)[t])?)");
 
     static {
@@ -58,6 +60,12 @@ public class ItemStackJsonDeserializer {
         potions.put("bad_omen", PotionEffectType.BAD_OMEN);
         potions.put("hero_of_the_village", PotionEffectType.HERO_OF_THE_VILLAGE);
         POTION_EFFECT_TYPE_BY_MC_NAME = Collections.unmodifiableMap(potions);
+
+        Map<String, Enchantment> enchantments = new HashMap<>();
+        for (Enchantment enchantment : Enchantment.values()) {
+            enchantments.put(enchantment.getKey().getKey(), enchantment);
+        }
+        ENCHANTMENT_BY_MC_NAME = Collections.unmodifiableMap(enchantments);
     }
 
     public static ItemStack deserializeItemStack(@NotNull JsonElement element) throws JsonParseException {
@@ -115,6 +123,7 @@ public class ItemStackJsonDeserializer {
                         for (Map.Entry<Enchantment, Integer> enchantmentEntry : enchantments.entrySet()) {
                             enchantmentStorageMeta.addStoredEnchant(enchantmentEntry.getKey(), enchantmentEntry.getValue(), true);
                         }
+                        stack.setItemMeta(meta);
                     }
                     else {
                         stack.addUnsafeEnchantments(enchantments);
@@ -163,27 +172,29 @@ public class ItemStackJsonDeserializer {
         Map<Enchantment, Integer> enchantments = new HashMap<>();
 
         JsonArray array = element.getAsJsonArray();
-        arr_for: for (JsonElement enchantmentElement : array) {
+        for (JsonElement enchantmentElement : array) {
             if (!enchantmentElement.isJsonObject()) throw new JsonParseException("enchantment element is not a Object");
             JsonObject object = enchantmentElement.getAsJsonObject();
 
             JsonElement idElement = object.get("id");
-            if (idElement == null || !idElement.isJsonPrimitive()) throw new JsonParseException("Enchantment id is not a primitive");
+            if (idElement == null || !idElement.isJsonPrimitive())
+                throw new JsonParseException("Enchantment id is not a primitive");
 
             JsonElement lvlElement = object.get("lvl");
-            if (lvlElement == null || !lvlElement.isJsonPrimitive()) throw new JsonParseException("Enchantment lvl is not a primitive");
+            if (lvlElement == null || !lvlElement.isJsonPrimitive())
+                throw new JsonParseException("Enchantment lvl is not a primitive");
 
             String id = idElement.getAsString();
             int lvl = lvlElement.getAsInt();
 
-            for (Enchantment enchantment : Enchantment.values()) {
-                if (enchantment.getKey().toString().equals(id)) {
-                    enchantments.put(enchantment, lvl);
-                    continue arr_for;
-                }
-            }
+            String modifiedId = id;
+            if (modifiedId.startsWith("minecraft:")) modifiedId = modifiedId.substring("minecraft:".length());
 
-            throw new JsonParseException("Unknown enchantment id: " + id);
+            Enchantment enchantment = ENCHANTMENT_BY_MC_NAME.get(modifiedId);
+            if (enchantment == null)
+                throw new JsonParseException("Unknown enchantment id: '" + id + "'. Available enchantments: " + ENCHANTMENT_BY_MC_NAME.keySet());
+
+            enchantments.put(enchantment, lvl);
         }
 
         return enchantments;
@@ -215,9 +226,11 @@ public class ItemStackJsonDeserializer {
             int duration = deserializeDuration(durationElement.getAsJsonPrimitive());
             int lvl = lvlElement.getAsInt();
 
-            PotionEffectType type = POTION_EFFECT_TYPE_BY_MC_NAME.get(id);
-            if (type == null) type = POTION_EFFECT_TYPE_BY_MC_NAME.get(id.substring("minecraft:".length()));
-            if (type == null) throw new JsonParseException("Unknown potion id: " + id);
+            String modifiedId = id;
+            if (modifiedId.startsWith("minecraft:")) modifiedId = modifiedId.substring("minecraft:".length());
+
+            PotionEffectType type = POTION_EFFECT_TYPE_BY_MC_NAME.get(modifiedId);
+            if (type == null) throw new JsonParseException("Unknown potion id: '" + id + "'. Available effects: " + POTION_EFFECT_TYPE_BY_MC_NAME.keySet());
 
             PotionEffect effect = new PotionEffect(type, duration, lvl, true, particles);
             result.add(effect);
@@ -328,14 +341,15 @@ public class ItemStackJsonDeserializer {
             String strTicks = durationMatcher.group("t");
 
             int days = strDays == null ? 0 : Integer.parseInt(strDays);
-            int hours = strDays == null ? 0 : Integer.parseInt(strHours);
-            int minutes = strDays == null ? 0 : Integer.parseInt(strMinutes);
-            int seconds = strDays == null ? 0 : Integer.parseInt(strSeconds);
-            int ticks = strDays == null ? 0 : Integer.parseInt(strTicks);
+            int hours = strHours == null ? 0 : Integer.parseInt(strHours);
+            int minutes = strMinutes == null ? 0 : Integer.parseInt(strMinutes);
+            int seconds = strSeconds == null ? 0 : Integer.parseInt(strSeconds);
+            int ticks = strTicks == null ? 0 : Integer.parseInt(strTicks);
 
             return ((((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 20 + ticks);
         }
-        return -1;
+
+        throw new JsonParseException(String.format("duration incorrect pattern: '%s'. Use [<days>d][<hours>h][<minutes>m][<seconds>s][<ticks>t]", stringDuration));
     }
 
 }

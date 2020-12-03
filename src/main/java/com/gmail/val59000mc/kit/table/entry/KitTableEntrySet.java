@@ -12,8 +12,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -22,12 +20,12 @@ public class KitTableEntrySet implements KitTableEntry {
     public static final @NotNull String ID = "set";
 
     private final int weight;
-    private final @NotNull List<String> name;
+    private final @NotNull List<String> references;
     private final @Nullable KitTableConditions conditions;
 
-    public KitTableEntrySet(int weight, @NotNull List<String> name, @Nullable KitTableConditions conditions) {
+    public KitTableEntrySet(int weight, @NotNull List<String> references, @Nullable KitTableConditions conditions) {
         this.weight = weight;
-        this.name = name;
+        this.references = references;
         this.conditions = conditions;
     }
 
@@ -48,7 +46,7 @@ public class KitTableEntrySet implements KitTableEntry {
 
     @Override
     public void give(@NotNull Player player, @NotNull KitsManager manager, @NotNull Random random) {
-        for (String setId : this.name) {
+        for (String setId : this.references) {
             KitTableSet set = manager.getSet(setId);
             if (set == null) {
                 UhcCore.getPlugin().getLogger().warning(String.format("Set with id '%s' not found", setId));
@@ -65,7 +63,7 @@ public class KitTableEntrySet implements KitTableEntry {
         }
 
         KitItem result = KitItem.EMPTY;
-        for (String setId : this.name) {
+        for (String setId : this.references) {
             KitTableSet set = manager.getSet(setId);
             if (set == null) {
                 UhcCore.getPlugin().getLogger().warning(String.format("Set with id '%s' not found", setId));
@@ -90,7 +88,7 @@ public class KitTableEntrySet implements KitTableEntry {
                                    @NotNull PlayerKitUpgrades upgrades) {
         if (conditions != null && !conditions.checkForDisplay(manager, player, upgrades)) return;
 
-        for (String setId : this.name) {
+        for (String setId : this.references) {
             KitTableSet set = manager.getSet(setId);
             if (set == null) {
                 UhcCore.getPlugin().getLogger().warning(String.format("Set with id '%s' not found", setId));

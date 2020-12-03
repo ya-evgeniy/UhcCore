@@ -95,7 +95,9 @@ public class KitLevelInventoryItem implements UhcInventoryItem {
             lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"Данное улучшение недоступно для тебя\",\"color\":\"red\"}]");
         }
 
-        ItemStackUtil.setDisplayName(stack, String.format("%s%s%s %s", ChatColor.RESET, ChatColor.GRAY, kit.getDisplayName(), RomanNumber.fromDecimal(upgradeDisplayLevel)));
+        String displayName = kit.getDisplay().hasTitle() ? kit.getDisplay().getTitle() : kit.getId();
+
+        ItemStackUtil.setDisplayName(stack, String.format("%s%s%s %s", ChatColor.RESET, ChatColor.GRAY, displayName, RomanNumber.fromDecimal(upgradeDisplayLevel)));
         ItemStackUtil.setJsonLore(stack, lore);
 
         return stack;

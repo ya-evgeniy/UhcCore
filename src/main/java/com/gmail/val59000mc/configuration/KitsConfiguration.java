@@ -51,16 +51,7 @@ public class KitsConfiguration {
             return false;
         }
 
-        KitsLoader kitsLoader = new KitsLoader(gameManager.getKitsManager());
-        try {
-            Path pluginDirectoryPath = UhcCore.getPlugin().getDataFolder().toPath();
-            kitsLoader.load(pluginDirectoryPath);
-            return true;
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+        return true;
     }
 
     private void tryParseConfiguration(JsonObject json) {

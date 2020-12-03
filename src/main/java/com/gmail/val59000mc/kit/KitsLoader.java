@@ -1,22 +1,33 @@
 package com.gmail.val59000mc.kit;
 
+import com.gmail.val59000mc.UhcCore;
+import com.gmail.val59000mc.kit.deserializer.KitDeserializeState;
 import com.gmail.val59000mc.kit.deserializer.KitsDeserializer;
+import com.gmail.val59000mc.kit.deserializer.stacktrace.KitDeserializeStacktraceManager;
 import com.gmail.val59000mc.kit.table.set.KitTableSet;
-import com.google.gson.Gson;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.JsonParseException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Deque;
-import java.util.LinkedList;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.logging.Logger;
 
 public class KitsLoader {
+
+    public static final String JSON_EXTENSION = ".json";
+
+    public static final String KIT_EXTENSION = ".kit" + JSON_EXTENSION;
+    public static final int KIT_EXTENSION_LENGTH = KIT_EXTENSION.length();
+
+    public static final String SET_EXTENSION = ".set" + JSON_EXTENSION;
+    public static final int SET_EXTENSION_LENGTH = SET_EXTENSION.length();
 
     private final @NotNull KitsManager manager;
 
@@ -26,52 +37,91 @@ public class KitsLoader {
 
     public void load(@NotNull Path pluginDirectoryPath) {
         Path kitsDirectoryPath = pluginDirectoryPath.resolve("kits");
-        Path setsDirectoryPath = kitsDirectoryPath.resolve("sets");
 
         KitsDeserializer kitsDeserializer = new KitsDeserializer(this.manager);
 
         if (Files.exists(kitsDirectoryPath) && Files.isDirectory(kitsDirectoryPath)) {
-            loadKits(kitsDeserializer, kitsDirectoryPath);
-        }
+            List<Path> toLoad = getDeepDirectoryFiles(kitsDirectoryPath);
 
-        if (Files.exists(setsDirectoryPath) && Files.isDirectory(setsDirectoryPath)) {
-            loadSets(kitsDeserializer, setsDirectoryPath);
-        }
+            List<Path> kitFiles = new ArrayList<>();
+            List<Path> setFiles = new ArrayList<>();
 
-    }
-
-    private void loadKits(@NotNull KitsDeserializer kitsDeserializer, @NotNull Path directoryPath) {
-        try (DirectoryStream<Path> filePaths = Files.newDirectoryStream(directoryPath)) {
-            for (Path filePath : filePaths) {
-                if (Files.isDirectory(filePath)) continue;
-                loadKit(kitsDeserializer, filePath);
+            for (Path path : toLoad) {
+                String filePath = path.toAbsolutePath().toString();
+                if (filePath.endsWith(KIT_EXTENSION)) {
+                    kitFiles.add(path);
+                }
+                else if (filePath.endsWith(SET_EXTENSION)) {
+                    setFiles.add(path);
+                }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+
+            Logger logger = UhcCore.getPlugin().getLogger();
+
+            KitRegistry registry = manager.getRegistry();
+
+            List<Kit> kits = new ArrayList<>();
+            List<KitTableSet> sets = new ArrayList<>();
+            deserialize(kitFiles, registry.getLoadedKits(), registry.getFailureKits(), kits, kitsDirectoryPath, kitsDeserializer, Kit.class, KIT_EXTENSION_LENGTH);
+            deserialize(setFiles, registry.getLoadedSets(), registry.getFailureSets(), sets, kitsDirectoryPath, kitsDeserializer, KitTableSet.class, SET_EXTENSION_LENGTH);
+
+            if (!registry.getFailureKits().isEmpty()) logger.severe("kits has a errors: " + registry.getFailureKits());
+            if (!registry.getFailureSets().isEmpty()) logger.severe("sets has a errors: " + registry.getFailureSets());
+
+            Set<Path> setReferences = new HashSet<>(registry.getSetReferences());
+            setReferences.removeAll(registry.getLoadedSets());
+
+            if (!setReferences.isEmpty()) logger.severe("Unknown set references: " + setReferences);
+
+            logger.info("Loaded kits: " + registry.getLoadedKits());
+            logger.info("Loaded sets: " + registry.getLoadedSets());
+
+            for (Kit kit : kits) manager.registerKit(kit);
+            for (KitTableSet set : sets) manager.registerSet(set);
+        }
+
+    }
+
+    private <T> void deserialize(List<Path> files, Set<Path> success, Set<Path> failure, List<T> result,
+                             Path kitsDirectoryPath, KitsDeserializer kitsDeserializer,
+                             Class<T> type, int length) {
+        for (Path filePath : files) {
+            Path relativePath = kitsDirectoryPath.relativize(filePath);
+            String fullFileName = relativePath.toString();
+            String fullName = fullFileName.substring(0, fullFileName.length() - length);
+
+            String fileName = relativePath.getFileName().toString();
+            String name = fileName.substring(0, fileName.length() - length);
+
+            KitDeserializeState.initialize(
+                    kitsDirectoryPath,
+                    filePath, filePath.getParent(),
+                    fullFileName, fullName,
+                    fileName, name
+            );
+
+            try(BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
+                result.add(kitsDeserializer.getGson().fromJson(reader, type));
+                success.add(Paths.get(fullName));
+            }
+            catch (JsonParseException e) {
+                UhcCore.getPlugin().getLogger().severe(KitDeserializeStacktraceManager.createStacktraceMessage(e.getMessage()));
+                failure.add(Paths.get(fullFileName));
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+                failure.add(Paths.get(fullFileName));
+            }
         }
     }
 
-    private void loadKit(@NotNull KitsDeserializer kitsDeserializer, @NotNull Path kitPath) {
-        Gson gson = kitsDeserializer.getGson();
-
-        try (BufferedReader reader = Files.newBufferedReader(kitPath, StandardCharsets.UTF_8)) {
-            Kit kit = gson.fromJson(reader, Kit.class);
-            this.manager.registerKit(kit);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JsonSyntaxException e) {
-            e.printStackTrace();
-        } catch (JsonIOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void loadSets(@NotNull KitsDeserializer kitsDeserializer, @NotNull Path directoryPath) {
+    private List<Path> getDeepDirectoryFiles(@NotNull Path kitsDirectoryPath) {
         Deque<Path> queue = new LinkedList<>();
-        queue.add(directoryPath);
+        queue.add(kitsDirectoryPath);
+
+        List<Path> toLoad = new ArrayList<>();
 
         while (!queue.isEmpty()) {
-
             Path path = queue.removeFirst();
             if (Files.isDirectory(path)) {
                 try (DirectoryStream<Path> filePaths = Files.newDirectoryStream(path)) {
@@ -81,25 +131,28 @@ public class KitsLoader {
                 }
             }
             else {
-                loadSet(kitsDeserializer, path);
+                toLoad.add(path);
             }
 
         }
+
+        return toLoad;
     }
 
-    private void loadSet(@NotNull KitsDeserializer kitsDeserializer, @NotNull Path setPath) {
-        Gson gson = kitsDeserializer.getGson();
+    public static Path resolve(Path kitsDirectoryPath, Path currentDirectory, Path path) {
+        Path usedDirectory = currentDirectory;
 
-        try (BufferedReader reader = Files.newBufferedReader(setPath, StandardCharsets.UTF_8)) {
-            KitTableSet set = gson.fromJson(reader, KitTableSet.class);
-            manager.registerSet(set);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JsonSyntaxException e) {
-            e.printStackTrace();
-        } catch (JsonIOException e) {
-            e.printStackTrace();
+        String pathStr = path.toString();
+        if (pathStr.startsWith(File.separator)) {
+            usedDirectory = kitsDirectoryPath;
+            path = Paths.get(pathStr.substring(1));
         }
+
+        return usedDirectory.resolve(path).normalize();
+    }
+
+    public static boolean checkPathAccess(Path kitDirectoryPath, Path resolvedPath) {
+        return resolvedPath.startsWith(kitDirectoryPath);
     }
 
 }

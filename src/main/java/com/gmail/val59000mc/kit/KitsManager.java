@@ -17,12 +17,14 @@ public class KitsManager {
 
     private static final Random RANDOM = new Random();
 
-    private final KitTableRegistry tableRegistry = new KitTableRegistry();
+    private final KitRegistry registry = new KitRegistry();
 
     private final Map<String, Kit> kitById = new HashMap<>();
     private final Map<KitGroup, List<Kit>> kitsByGroup = new HashMap<>();
     private final Map<String, KitGroup> groupById = new HashMap<>();
     private final Map<String, KitTableSet> setById = new HashMap<>();
+
+    private final List<KitGroup> groups = new ArrayList<>();
 
     private final @NotNull GameManager gameManager;
     private final @NotNull DbKitUpgrades dbKitUpgrades;
@@ -31,7 +33,7 @@ public class KitsManager {
         this.gameManager = gameManager;
         this.dbKitUpgrades = new DbKitUpgrades(gameManager);
 
-        this.groupById.put("default", new KitGroup("default", 1));
+        registerGroup(new KitGroup("default", 1));
     }
 
     public void registerKit(@NotNull Kit kit) {
@@ -52,7 +54,10 @@ public class KitsManager {
         if (oldGroup != null) {
             List<Kit> kits = this.kitsByGroup.remove(oldGroup);
             if (kits != null) this.kitsByGroup.put(group, kits);
+
+            groups.remove(oldGroup);
         }
+        groups.add(group);
     }
 
     public void registerSet(@NotNull KitTableSet set) {
@@ -108,7 +113,7 @@ public class KitsManager {
     }
 
     public @NotNull List<KitGroup> getGroups() {
-        return new ArrayList<>(this.groupById.values());
+        return new ArrayList<>(this.groups);
     }
 
     public @NotNull List<Kit> getKits() {
@@ -119,16 +124,16 @@ public class KitsManager {
         return this.kitById.size();
     }
 
-    public KitTableRegistry getTableRegistry() {
-        return tableRegistry;
-    }
-
     public @NotNull GameManager getGameManager() {
         return gameManager;
     }
 
     public DbKitUpgrades getDbKitUpgrades() {
         return dbKitUpgrades;
+    }
+
+    public KitRegistry getRegistry() {
+        return registry;
     }
 
 }

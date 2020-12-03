@@ -15,6 +15,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -23,9 +24,11 @@ import java.util.Random;
 public class Kit {
 
     private final @NotNull String id;
+    private final @NotNull String formattedId;
+
     private final @NotNull KitGroup group;
 
-    private final @NotNull ItemStack display;
+    private final @NotNull KitDisplayItem display;
 
     private final @Nullable KitUpgrades upgrades;
     private final @Nullable KitTableEntries entries;
@@ -35,10 +38,11 @@ public class Kit {
 
     public Kit(@NotNull String id,
                @NotNull KitGroup group,
-               @NotNull ItemStack display,
+               @NotNull KitDisplayItem display,
                @Nullable KitUpgrades upgrades,
                @Nullable KitTableEntries entries) {
         this.id = id;
+        this.formattedId = this.id.replace(File.separator, "/");
         this.group = group;
         this.display = display;
         this.upgrades = upgrades;
@@ -49,18 +53,16 @@ public class Kit {
         return id;
     }
 
+    public String getFormattedId() {
+        return formattedId;
+    }
+
     public @NotNull KitGroup getGroup() {
         return group;
     }
 
-    public @NotNull ItemStack getDisplayItems() {
+    public @NotNull KitDisplayItem getDisplay() {
         return display;
-    }
-
-    public @NotNull String getDisplayName() {
-        ItemMeta meta = this.display.getItemMeta();
-        if (meta == null) return this.id + ":null";
-        return meta.getDisplayName();
     }
 
     public @Nullable KitUpgrades getUpgrades() {

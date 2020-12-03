@@ -8,8 +8,8 @@ import com.gmail.val59000mc.inventory.util.ScrollableRow;
 import com.gmail.val59000mc.kit.Kit;
 import com.gmail.val59000mc.kit.KitGroup;
 import com.gmail.val59000mc.kit.KitsManager;
-import com.gmail.val59000mc.kit.upgrade.PlayerKitUpgrades;
 import com.gmail.val59000mc.players.UhcPlayer;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
@@ -48,31 +48,53 @@ public class KitSelectionInventory extends UhcInventoryContent {
     }
 
     private void initialize() {
-        int index = 0;
         int y = 0;
+        int x = 0;
+
         for (KitGroup group : kitsManager.getGroups()) {
-            List<Kit> kits = kitsManager.getKits(group);
-            if (kits.isEmpty()) continue;
+            int lines = group.getLines();
 
-            ScrollableRow row = new ScrollableRow(
-                    kits.stream()
-                            .map(kit -> new KitInventoryItem(this, player, kit))
-                            .collect(Collectors.toList()),
-                    0, y, 9, group.getLines()
-            );
-
-            row.setNextButton(new NextPageInventoryItem(this, row));
-            row.setPrevButton(new PrevPageInventoryItem(this, row));
-
-            this.rowByIndex.put(index++, row);
-            y += group.getLines();
+            for (Kit kit : kitsManager.getKits(group)) {
+                if (lines < 0) break;
+                setItem(x++, y, new KitInventoryItem(this, player, kit));
+                if (x > 8) {
+                    y++;
+                    lines--;
+                    x = 0;
+                }
+            }
+            y++;
+            x = 0;
         }
 
-        rowByIndex.values().forEach(row -> row.render(this));
+        update();
+//        int index = 0;
+//        int y = 0;
+//        for (KitGroup group : kitsManager.getGroups()) {
+//            List<Kit> kits = kitsManager.getKits(group);
+//            if (kits.isEmpty()) continue;
+//
+//            ScrollableRow row = new ScrollableRow(
+//                    kits.stream()
+//                            .map(kit -> new KitInventoryItem(this, player, kit))
+//                            .collect(Collectors.toList()),
+//                    0, y, 9, group.getLines()
+//            );
+//
+//            row.setNextButton(new NextPageInventoryItem(this, row));
+//            row.setPrevButton(new PrevPageInventoryItem(this, row));
+//
+//            this.rowByIndex.put(index++, row);
+//            y += group.getLines();
+//        }
+//
+//        rowByIndex.values().forEach(row -> row.render(this));
     }
 
     private void update() {
-        rowByIndex.values().forEach(row -> row.render(this));
+        for (int i = 0; i < this.inventory.getSize(); i++) {
+            setItem(i, getItem(i));
+        }
     }
 
     private static int countLines(@NotNull KitsManager kitsManager) {
@@ -103,9 +125,11 @@ public class KitSelectionInventory extends UhcInventoryContent {
 
         @Override
         public @Nullable ItemStack getDisplay() {
-            ItemStack result = kit.getDisplayItems().clone();
+            ItemStack result = kit.getDisplay().getItem().clone();
             ItemMeta meta = result.getItemMeta();
             if (meta == null) return result;
+
+            meta.setDisplayName(ChatColor.RESET.toString() + ChatColor.GOLD + (kit.getDisplay().hasTitle() ? kit.getDisplay().getTitle() : kit.getId()));
 
             for (Enchantment enchantment : meta.getEnchants().keySet()) meta.removeEnchant(enchantment);
             if (kit == player.getKit()) meta.addEnchant(Enchantment.LUCK, 1, true);
@@ -117,13 +141,13 @@ public class KitSelectionInventory extends UhcInventoryContent {
 
             boolean hasPermission = false;
             try {
-                hasPermission = this.player.getPlayer().hasPermission("uhccore.kit." + kit.getId());
+                hasPermission = this.player.getPlayer().hasPermission("uhccore.kit." + kit.getFormattedId());
             } catch (UhcPlayerNotOnlineException ignored) {
             }
 
             if (!hasPermission) {
                 lore.add("[\"\"]");
-                lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"Данный набор недоступен для тебя\",\"color\":\"red\"}]");
+                lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"Данный набор доступен только для " + kit.getGroup().getId() + "\",\"color\":\"red\"}]");
             }
 
             displayItems.setLore(meta, lore);
@@ -148,7 +172,7 @@ public class KitSelectionInventory extends UhcInventoryContent {
             }
             else if (event.getAction() == InventoryAction.PICKUP_ALL) {
 
-                boolean hasPermission = bukkitPlayer.hasPermission("uhccore.kit." + kit.getId());
+                boolean hasPermission = bukkitPlayer.hasPermission("uhccore.kit." + kit.getFormattedId());
                 if (!hasPermission) {
                     bukkitPlayer.playSound(bukkitPlayer.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
                     return;

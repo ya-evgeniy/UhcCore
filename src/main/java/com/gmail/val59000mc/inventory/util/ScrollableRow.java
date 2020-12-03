@@ -56,7 +56,7 @@ public class ScrollableRow {
 
     private void renderButtons(@NotNull UhcInventoryContent inventory) {
         int leftButtonIndex = this.x - 1;
-        int rightButtonIndex = this.x + rectangleRenderer.getWidth();
+        int rightButtonIndex = this.x - 1 + rectangleRenderer.getWidth();
 
         inventory.setItem(leftButtonIndex, this.prevButton);
         inventory.setItem(rightButtonIndex, this.nextButton);

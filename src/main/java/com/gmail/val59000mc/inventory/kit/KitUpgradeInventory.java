@@ -44,7 +44,7 @@ public class KitUpgradeInventory extends UhcInventoryContent {
     private void generateContent() {
         KitUpgrades upgrades = kit.getUpgrades();
         if (upgrades != null) {
-            String displayName = kit.getDisplayName().replaceAll("&[0-9a-f]", "");
+            String displayName = kit.getDisplay().hasTitle() ? kit.getDisplay().getTitle() : kit.getId();
             drawUpgradeLevels(displayName, upgrades);
 
             displayItems = new KitDisplayItems[5];

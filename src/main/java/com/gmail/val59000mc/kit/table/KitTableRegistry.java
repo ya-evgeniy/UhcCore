@@ -9,7 +9,9 @@ import com.gmail.val59000mc.kit.table.entry.KitTableEntrySet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class KitTableRegistry {
@@ -41,6 +43,14 @@ public class KitTableRegistry {
 
     public @Nullable Class<? extends KitTableCondition> getConditionImpl(@NotNull String type) {
         return this.conditionImplByType.get(type);
+    }
+
+    public List<String> getEntryTypes() {
+        return new ArrayList<>(this.entryImplByType.keySet());
+    }
+
+    public List<String> getConditionTypes() {
+        return new ArrayList<>(this.conditionImplByType.keySet());
     }
 
 }

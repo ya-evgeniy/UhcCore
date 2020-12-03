@@ -12,12 +12,9 @@ import java.util.Random;
 
 public class KitTableConditionUpgradeLevel implements KitTableCondition {
 
-    public static final @NotNull String ID = "upgrade_level";
+    public static final @NotNull String ID = "upgrades";
 
-    @SerializedName("upgrade_id")
     private final @NotNull String upgradeId;
-
-    @SerializedName("upgrade_level")
     private final int level;
 
     public KitTableConditionUpgradeLevel(@NotNull String upgradeId, int level) {

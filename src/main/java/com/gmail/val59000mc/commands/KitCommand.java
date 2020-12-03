@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,7 +69,7 @@ public class KitCommand extends BaseCommand {
             return;
         }
 
-        Kit kit = manager.getKitsManager().getKit(kitId);
+        Kit kit = manager.getKitsManager().getKit(kitId.replace("/", File.separator));
         if (kit == null) {
             sender.sendMessage(String.format("%sКит с ид '%s' не найден", ChatColor.RED, kitId));
             return;
@@ -93,7 +94,7 @@ public class KitCommand extends BaseCommand {
             return;
         }
 
-        Kit kit = manager.getKitsManager().getKit(kitId);
+        Kit kit = manager.getKitsManager().getKit(kitId.replace("/", File.separator));
         if (kit == null) {
             sender.sendMessage(String.format("%sКит '%s' не найден", ChatColor.RED, kitId));
             return;
@@ -120,10 +121,10 @@ public class KitCommand extends BaseCommand {
         }
 
         int maxLevel = upgrades.getLevels().size();
-        int currentLevel = uhcPlayer.getKitUpgrades().getLevel(kitId);
+        int currentLevel = uhcPlayer.getKitUpgrades().getLevel(upgrades.getId());
 
         if (currentLevel < settingLevel && settingLevel <= maxLevel) {
-            uhcPlayer.getKitUpgrades().setLevel(kitId, settingLevel);
+            uhcPlayer.getKitUpgrades().setLevel(upgrades.getId(), settingLevel);
             manager.getKitsManager().getDbKitUpgrades().save(uhcPlayer, kit, settingLevel);
         }
         else {
@@ -181,9 +182,9 @@ public class KitCommand extends BaseCommand {
 
             List<String> result = new ArrayList<>();
             for (Kit kit : manager.getKitsManager().getKits()) {
-                if (kit.getId().contains(" ")) continue;
-                if (kit.getId().startsWith(kitArgument)) {
-                    result.add(kit.getId());
+                if (kit.getFormattedId().contains(" ")) continue;
+                if (kit.getFormattedId().startsWith(kitArgument)) {
+                    result.add(kit.getFormattedId());
                 }
             }
 
@@ -215,9 +216,9 @@ public class KitCommand extends BaseCommand {
 
             List<String> result = new ArrayList<>();
             for (Kit kit : manager.getKitsManager().getKits()) {
-                if (kit.getId().contains(" ")) continue;
-                if (kit.getId().startsWith(kitArgument)) {
-                    result.add(kit.getId());
+                if (kit.getFormattedId().contains(" ")) continue;
+                if (kit.getFormattedId().startsWith(kitArgument)) {
+                    result.add(kit.getFormattedId());
                 }
             }
 
@@ -229,7 +230,7 @@ public class KitCommand extends BaseCommand {
         if (arguments.length == 4) {
             String level = arguments[3];
 
-            Kit kit = manager.getKitsManager().getKit(kitArgument);
+            Kit kit = manager.getKitsManager().getKit(kitArgument.replace("/", File.separator));
             if (kit == null) return null;
 
             KitUpgrades upgrades = kit.getUpgrades();
