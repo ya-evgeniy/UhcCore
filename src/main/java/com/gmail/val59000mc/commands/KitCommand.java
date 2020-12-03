@@ -75,7 +75,36 @@ public class KitCommand extends BaseCommand {
             return;
         }
 
-        manager.getKitsManager().giveKit(kit, player);
+        if (arguments.length > 3) {
+            int settingLevel;
+            try {
+                settingLevel = Integer.parseInt(arguments[3]);
+            } catch (NumberFormatException e) {
+                sender.sendMessage(String.format("%sУровень кита '%s' не является числом", ChatColor.RED, kitId));
+                return;
+            }
+
+            UhcPlayer uhcPlayer = manager.getPlayersManager().getUhcPlayer(player);
+            if (uhcPlayer == null) {
+                sender.sendMessage(String.format("%sИгрок с ником '%s' не найден", ChatColor.RED, playerName));
+                return;
+            }
+
+            KitUpgrades upgrades = kit.getUpgrades();
+            if (upgrades == null) {
+                sender.sendMessage(String.format("%sКит '%s' не имеет улучшений", ChatColor.RED, kitId));
+                return;
+            }
+
+            int upgradeLevel = uhcPlayer.getKitUpgrades().getLevel(upgrades.getId()); // FIXME
+            uhcPlayer.getKitUpgrades().setLevel(upgrades.getId(), settingLevel);
+            manager.getKitsManager().giveKit(kit, player);
+            uhcPlayer.getKitUpgrades().setLevel(upgrades.getId(), upgradeLevel);
+        }
+        else {
+            manager.getKitsManager().giveKit(kit, player);
+        }
+        sender.sendMessage(String.format("%sКит с ид '%s' успешно выдан '%s'", ChatColor.GREEN, kitId, player.getName()));
     }
 
     private void onCommandLevel(Player sender, String[] arguments) {
@@ -123,14 +152,19 @@ public class KitCommand extends BaseCommand {
         int maxLevel = upgrades.getLevels().size();
         int currentLevel = uhcPlayer.getKitUpgrades().getLevel(upgrades.getId());
 
-        if (currentLevel < settingLevel && settingLevel <= maxLevel) {
-            uhcPlayer.getKitUpgrades().setLevel(upgrades.getId(), settingLevel);
-            manager.getKitsManager().getDbKitUpgrades().save(uhcPlayer, kit, settingLevel);
-        }
-        else {
-            sender.sendMessage(String.format("%sУровень кита '%s' уже имеется у игрока", ChatColor.RED, settingLevel));
+        if (settingLevel < 0 || settingLevel > maxLevel) {
+            sender.sendMessage(String.format("%sУровень кита '%s' должен быть в диапазоне от '%s' до '%s'", ChatColor.RED, settingLevel, 0, maxLevel));
+            return;
         }
 
+        if (currentLevel == settingLevel) {
+            sender.sendMessage(String.format("%sУровень кита '%s' уже имеется у игрока", ChatColor.RED, settingLevel));
+            return;
+        }
+
+        uhcPlayer.getKitUpgrades().setLevel(upgrades.getId(), settingLevel);
+        manager.getKitsManager().getDbKitUpgrades().save(uhcPlayer, kit, settingLevel);
+        sender.sendMessage(String.format("%sИгроку '%s' установлен уровень '%s' для кита '%s'", ChatColor.GREEN, player.getName(), settingLevel, kit.getFormattedId()));
     }
 
     @Override
@@ -169,7 +203,7 @@ public class KitCommand extends BaseCommand {
 
             List<String> result = new ArrayList<>();
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                if (onlinePlayer.getName().toLowerCase().startsWith(playerArgument)) {
+                if (onlinePlayer.getName().toLowerCase().contains(playerArgument)) {
                     result.add(onlinePlayer.getName());
                 }
             }
@@ -179,15 +213,30 @@ public class KitCommand extends BaseCommand {
 
         if (arguments.length == 3) {
             String kitArgument = arguments[2];
-
             List<String> result = new ArrayList<>();
             for (Kit kit : manager.getKitsManager().getKits()) {
                 if (kit.getFormattedId().contains(" ")) continue;
-                if (kit.getFormattedId().startsWith(kitArgument)) {
+                if (kit.getFormattedId().contains(kitArgument)) {
                     result.add(kit.getFormattedId());
                 }
             }
 
+            return result;
+        }
+
+        if (arguments.length == 4) {
+            String playerArgument = arguments[1];
+            String kitArgument = arguments[2];
+            String level = arguments[3];
+
+            Kit kit = manager.getKitsManager().getKit(kitArgument.replace("/", File.separator));
+            if (kit == null) return null;
+
+            Player player = Bukkit.getPlayer(playerArgument);
+            if (player == null) return null;
+
+            List<String> result = new ArrayList<>();
+            appendKitLevels(result, player, kit, level);
             return result;
         }
 
@@ -201,7 +250,7 @@ public class KitCommand extends BaseCommand {
 
             List<String> result = new ArrayList<>();
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                if (onlinePlayer.getName().toLowerCase().startsWith(playerArgument)) {
+                if (onlinePlayer.getName().toLowerCase().contains(playerArgument)) {
                     result.add(onlinePlayer.getName());
                 }
             }
@@ -217,7 +266,7 @@ public class KitCommand extends BaseCommand {
             List<String> result = new ArrayList<>();
             for (Kit kit : manager.getKitsManager().getKits()) {
                 if (kit.getFormattedId().contains(" ")) continue;
-                if (kit.getFormattedId().startsWith(kitArgument)) {
+                if (kit.getFormattedId().contains(kitArgument)) {
                     result.add(kit.getFormattedId());
                 }
             }
@@ -233,29 +282,32 @@ public class KitCommand extends BaseCommand {
             Kit kit = manager.getKitsManager().getKit(kitArgument.replace("/", File.separator));
             if (kit == null) return null;
 
-            KitUpgrades upgrades = kit.getUpgrades();
-            if (upgrades == null) return null;
-
-            int maxLevel = upgrades.getLevels().size();
-
             Player player = Bukkit.getPlayer(playerArgument);
             if (player == null) return null;
 
-            UhcPlayer uhcPlayer = manager.getPlayersManager().getUhcPlayer(player);
-            if (uhcPlayer == null) return null;
-
-            int currentLevel = uhcPlayer.getKitUpgrades().getLevel(kitArgument);
-
             List<String> result = new ArrayList<>();
-            for (int i = currentLevel + 1; i <= maxLevel; i++) {
-                String availableLevel = String.valueOf(i);
-                if (availableLevel.startsWith(level)) result.add(availableLevel);
-            }
-
+            appendKitLevels(result, player, kit, level);
             return result;
         }
 
         return null;
+    }
+
+    private void appendKitLevels(List<String> arguments, Player player, Kit kit, String currentInput) {
+        KitUpgrades upgrades = kit.getUpgrades();
+        if (upgrades == null) return;
+
+        int maxLevel = upgrades.getLevels().size();
+
+        UhcPlayer uhcPlayer = manager.getPlayersManager().getUhcPlayer(player);
+        if (uhcPlayer == null) return;
+
+        int currentLevel = uhcPlayer.getKitUpgrades().getLevel(upgrades.getId());
+
+        for (int i = 0; i <= maxLevel; i++) {
+            String levelValue = String.valueOf(i);
+            if (currentLevel != i && levelValue.contains(currentInput)) arguments.add(levelValue);
+        }
     }
 
 }

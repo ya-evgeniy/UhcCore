@@ -27,7 +27,7 @@ public class DbKitUpgrades {
 
     private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS `%s` (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, player_unique_id VARCHAR(36) NOT NULL, upgrade_id VARCHAR(255) NOT NULL,upgrade_level INT NOT NULL, upgrade_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP);";
     private static final String INSERT_PLAYER_UPGRADE = "INSERT INTO `%s` (`player_unique_id`, `upgrade_id`, `upgrade_level`) VALUES ('%s', '%s', %s);";
-    private static final String SELECT_PLAYER_UPGRADE = "SELECT `upgrade_id`, MAX(`upgrade_level`) FROM `%s` WHERE (`player_unique_id`='%s') GROUP BY `upgrade_id`;";
+    private static final String SELECT_PLAYER_UPGRADE = "SELECT A.`upgrade_id`, A.`upgrade_level` FROM `%s` A RIGHT JOIN (SELECT `upgrade_id`, MAX(`id`) AS lastest_id FROM `%s` WHERE (`player_unique_id`='%s') GROUP BY `upgrade_id`) B ON A.`upgrade_id`=B.`upgrade_id` WHERE (`player_unique_id`='%s' AND `id`=`lastest_id`);";
 
     private final @NotNull GameManager manager;
 
@@ -114,7 +114,7 @@ public class DbKitUpgrades {
 
         execute(statement -> {
             KitsConfiguration configuration = manager.getKitsConfiguration();
-            ResultSet result = statement.executeQuery(String.format(SELECT_PLAYER_UPGRADE, configuration.getTable(), player.getUuid()));
+            ResultSet result = statement.executeQuery(String.format(SELECT_PLAYER_UPGRADE, configuration.getTable(), configuration.getTable(), player.getUuid(), player.getUuid()));
             Map<String, Integer> levelByUpgrade = new HashMap<>();
 
             while (result.next()) {
