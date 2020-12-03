@@ -69,11 +69,12 @@ public class BlockListener implements Listener{
 		ItemStack mainHandItem = event.getPlayer().getInventory().getItemInMainHand();
 		if (!lootConf.getMiningTools().isEmpty() && !lootConf.getMiningTools().contains(mainHandItem.getType())) return;
 
-		Location centerBlockLocation = breakingBlock.getLocation().add(0.5, 0.5, 0.5);
+		Location centerBlockLocation = breakingBlock.getLocation().clone().add(0.5, 0.5, 0.5);
 		event.setExpToDrop(lootConf.getAddXp());
 
 		World world = centerBlockLocation.getWorld();
-		if (world != null) world.dropItemNaturally(centerBlockLocation, lootConf.getLoot().clone());
+		breakingBlock.setType(Material.AIR);
+		if (world != null) world.dropItem(centerBlockLocation, lootConf.getLoot().clone());
 
 		if (lootConf.getAddXp() > 0) UhcItems.spawnExtraXp(centerBlockLocation, lootConf.getAddXp());
 	}
