@@ -167,6 +167,7 @@ public class LobbyPvpListener implements Listener {
                 player.getInventory().clear();
                 player.setFoodLevel(20);
                 player.setSaturation(20);
+                player.setHealth(20.0);
             }
         }
     }
