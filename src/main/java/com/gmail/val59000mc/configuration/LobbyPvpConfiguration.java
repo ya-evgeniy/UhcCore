@@ -1,12 +1,10 @@
 package com.gmail.val59000mc.configuration;
 
-import com.gmail.val59000mc.exceptions.ParseException;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.lobby.pvp.zone.RectangleZone;
 import com.gmail.val59000mc.lobby.pvp.zone.SphereZone;
 import com.gmail.val59000mc.lobby.pvp.zone.Zone;
-import com.gmail.val59000mc.utils.JsonItemStack;
-import com.gmail.val59000mc.utils.JsonItemUtils;
+import com.gmail.val59000mc.utils.ItemStackJsonDeserializer;
 import com.gmail.val59000mc.utils.equipment.Equipment;
 import com.gmail.val59000mc.utils.equipment.EquipmentContainer;
 import com.gmail.val59000mc.utils.equipment.EquipmentSlot;
@@ -14,7 +12,10 @@ import com.gmail.val59000mc.utils.equipment.slot.*;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import org.bukkit.Location;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,8 @@ public class LobbyPvpConfiguration {
 
     private boolean useCustomRespawnLocation = false;
     private Location customRespawnLocation;
+
+    private List<PotionEffect> effects = new ArrayList<>();
 
     public LobbyPvpConfiguration(GameManager gameManager) {
         this.gameManager = gameManager;
@@ -75,6 +78,14 @@ public class LobbyPvpConfiguration {
             }
 
             customRespawnLocation = new Location(null, x, y, z, yaw, pitch);
+        }
+
+        JsonElement effectsElement = json.get("effects");
+        try {
+            if (effectsElement != null) this.effects = ItemStackJsonDeserializer.deserializePotionEffects(effectsElement);
+        }
+        catch (JsonParseException e) {
+            e.printStackTrace();
         }
     }
 
@@ -169,11 +180,12 @@ public class LobbyPvpConfiguration {
 
             JsonObject itemObject = equipmentObject.get("item").getAsJsonObject();
             try {
-                JsonItemStack jsonItem = JsonItemUtils.getItemFromJson(itemObject);
+                ItemStack stack = ItemStackJsonDeserializer.deserializeItemStack(itemObject);
                 equipments.add(new Equipment(
-                        equipmentSlot, jsonItem
+                        equipmentSlot, stack
                 ));
-            } catch (ParseException e) {
+            }
+            catch (JsonParseException e) {
                 e.printStackTrace();
             }
         }
@@ -199,6 +211,10 @@ public class LobbyPvpConfiguration {
 
     public Location getCustomRespawnLocation() {
         return customRespawnLocation;
+    }
+
+    public List<PotionEffect> getEffects() {
+        return effects;
     }
 
 }

@@ -1,5 +1,5 @@
 {
-    "enabled": true,
+    "enabled": false,
 
     "use_custom_respawn_location": false,
     "custom_respawn_location": {
@@ -31,7 +31,7 @@
         }
     ],
 
-    "equipment__comment": "Available slots: [helmet, chestplate, leggings, boots, off_hand, hotbar.0-8, storage.0-27, inventory]",
+    "equipment__comment": "Available slots: [helmet, chestplate, leggings, boots, off_hand, hotbar.0-8, storage.0-26, inventory]",
     "equipment": [
         {
             "slot": "helmet",
@@ -57,6 +57,10 @@
             "slot": "hotbar.0",
             "item": { "type": "minecraft:iron_sword" }
         }
+    ],
+
+    "effects": [
+        { "id": "minecraft:saturation", "duration": 32766, "lvl": 1 }
     ]
 }
 

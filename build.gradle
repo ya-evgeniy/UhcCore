@@ -60,6 +60,14 @@ dependencies {
     shadow 'com.comphenix.protocol:ProtocolLib:4.4.0'
     compile project('Support-WorldEdit-6')
     compile project('Support-WorldEdit-7')
+
+    // https://mvnrepository.com/artifact/org.jetbrains/annotations
+    compile group: 'org.jetbrains', name: 'annotations', version: '20.1.0'
+}
+
+task copyJarToRun(type: Copy) {
+    from(jar)
+    into "$projectDir/run/plugins"
 }
 
 shadowJar {
@@ -67,4 +75,5 @@ shadowJar {
     configurations = [project.configurations.compile]
 }
 
-build.dependsOn(shadowJar)
+build.dependsOn(copyJarToRun)
+copyJarToRun.dependsOn(shadowJar)

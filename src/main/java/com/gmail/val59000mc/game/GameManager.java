@@ -248,6 +248,8 @@ public class GameManager{
 	public void loadNewGame() {
 		deleteOldPlayersFiles();
 		loadConfig();
+
+		worldBorder.setupConfigValues(configuration);
 		setGameState(GameState.LOADING);
 
 		registerListeners();
