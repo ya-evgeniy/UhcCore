@@ -1,6 +1,8 @@
 package com.gmail.val59000mc.listeners;
 
 import com.gmail.val59000mc.configuration.MainConfiguration;
+import com.gmail.val59000mc.game.GameManager;
+import com.gmail.val59000mc.game.GameState;
 import com.gmail.val59000mc.players.PlayerState;
 import com.gmail.val59000mc.players.PlayersManager;
 import com.gmail.val59000mc.players.UhcPlayer;
@@ -12,10 +14,12 @@ import org.bukkit.event.player.PlayerMoveEvent;
 
 public class PlayerMovementListener implements Listener{
 
+    private final GameManager gameManager;
     private final PlayersManager playersManager;
     private final MainConfiguration configuration;
 
-    public PlayerMovementListener(PlayersManager playersManager, MainConfiguration configuration){
+    public PlayerMovementListener(GameManager gameManager, PlayersManager playersManager, MainConfiguration configuration){
+        this.gameManager = gameManager;
         this.playersManager = playersManager;
         this.configuration = configuration;
     }
@@ -29,7 +33,8 @@ public class PlayerMovementListener implements Listener{
     private void handleLobbyPlayers(PlayerMoveEvent e) {
         Player player = e.getPlayer();
         UhcPlayer uhcPlayer = playersManager.getUhcPlayer(player);
-        if (uhcPlayer.getState().equals(PlayerState.WAITING) && player.getLocation().getY() < 0) {
+
+        if (gameManager.getGameState().equals(GameState.WAITING) && player.getLocation().getY() < 0) {
             e.getPlayer().teleport(configuration.getLobbySpawnLocation());
         }
     }
