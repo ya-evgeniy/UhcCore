@@ -23,7 +23,6 @@ public class TeamManager{
         ChatColor.AQUA.toString(),
         ChatColor.LIGHT_PURPLE.toString()
     };
-
     private static final String[] TEAM_COLOR_VARIATIONS = new String[]{
         "",
         ChatColor.BOLD.toString(),

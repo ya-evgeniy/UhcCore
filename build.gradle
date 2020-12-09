@@ -58,7 +58,7 @@ dependencies {
     shadow 'com.github.MilkBowl:VaultAPI:1.7'
     compile 'com.github.WesJD.AnvilGUI:anvilgui:master-SNAPSHOT'
     shadow 'com.comphenix.protocol:ProtocolLib:4.4.0'
-    compile project('Support-WorldEdit-6')
+    //compile project('Support-WorldEdit-6')
     compile project('Support-WorldEdit-7')
 
     // https://mvnrepository.com/artifact/org.jetbrains/annotations
