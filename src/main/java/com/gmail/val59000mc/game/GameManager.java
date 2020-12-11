@@ -2,15 +2,14 @@ package com.gmail.val59000mc.game;
 
 import com.gmail.val59000mc.UhcCore;
 import com.gmail.val59000mc.commands.*;
-import com.gmail.val59000mc.configuration.LobbyPvpConfiguration;
-import com.gmail.val59000mc.configuration.MainConfiguration;
-import com.gmail.val59000mc.configuration.VaultManager;
-import com.gmail.val59000mc.configuration.YamlFile;
+import com.gmail.val59000mc.configuration.*;
 import com.gmail.val59000mc.customitems.CraftsManager;
-import com.gmail.val59000mc.customitems.KitsManager;
 import com.gmail.val59000mc.events.UhcGameStateChangedEvent;
 import com.gmail.val59000mc.events.UhcStartedEvent;
 import com.gmail.val59000mc.events.UhcStartingEvent;
+import com.gmail.val59000mc.inventory.UhcInventory;
+import com.gmail.val59000mc.kit.KitsLoader;
+import com.gmail.val59000mc.kit.KitsManager;
 import com.gmail.val59000mc.languages.Lang;
 import com.gmail.val59000mc.listeners.*;
 import com.gmail.val59000mc.lobby.pvp.LobbyPvpManager;
@@ -25,11 +24,11 @@ import com.gmail.val59000mc.schematics.UndergroundNether;
 import com.gmail.val59000mc.scoreboard.ScoreboardManager;
 import com.gmail.val59000mc.threads.*;
 import com.gmail.val59000mc.utils.*;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.command.CommandExecutor;
@@ -39,6 +38,7 @@ import org.bukkit.event.Listener;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,10 +55,12 @@ public class GameManager{
 	private final MapLoader mapLoader;
 	private final UhcWorldBorder worldBorder;
 	private final LobbyPvpManager lobbyPvpManager;
+	private final KitsManager kitsManager;
 
 	// Configs
 	private final MainConfiguration configuration;
 	private final LobbyPvpConfiguration lobbyPvpConfiguration;
+	private final KitsConfiguration kitsConfiguration;
 
 	private Lobby lobby;
 	private DeathmatchArena arena;
@@ -83,10 +85,11 @@ public class GameManager{
 		mapLoader = new MapLoader();
 		worldBorder = new UhcWorldBorder();
 		lobbyPvpManager = new LobbyPvpManager(this);
+		kitsManager = new KitsManager(this);
 
 		configuration = new MainConfiguration(this);
 		lobbyPvpConfiguration = new LobbyPvpConfiguration(this);
-
+		kitsConfiguration = new KitsConfiguration(this);
 
 		episodeNumber = 0;
 		elapsedTime = 0;
@@ -112,12 +115,20 @@ public class GameManager{
 		return scenarioManager;
 	}
 
+	public KitsManager getKitsManager() {
+		return kitsManager;
+	}
+
 	public MainConfiguration getConfiguration() {
 		return configuration;
 	}
 
 	public LobbyPvpConfiguration getLobbyPvpConfiguration() {
 		return lobbyPvpConfiguration;
+	}
+
+	public KitsConfiguration getKitsConfiguration() {
+		return kitsConfiguration;
 	}
 
 	public UhcWorldBorder getWorldBorder() {
@@ -324,6 +335,8 @@ public class GameManager{
 		setGameState(GameState.WAITING);
 		Bukkit.getLogger().info(Lang.DISPLAY_MESSAGE_PREFIX+" Players are now allowed to join");
 		Bukkit.getScheduler().scheduleSyncDelayedTask(UhcCore.getPlugin(), new PreStartThread(this),0);
+
+		kitsManager.getDbKitUpgrades().start();
 	}
 
 	public void startGame(){
@@ -397,17 +410,34 @@ public class GameManager{
 		YamlFile cfg;
 		YamlFile storage;
 
-		JsonObject lobbyPvp;
 
 		try {
 			cfg = FileUtils.saveResourceIfNotAvailable("config.yml");
 			storage = FileUtils.saveResourceIfNotAvailable("storage.yml");
-
-			lobbyPvp = GsonFileUtils.saveResourceIfNotAvailable("lobby-pvp.json");
 		}
 		catch (InvalidConfigurationException ex) {
 			ex.printStackTrace();
 			return;
+		}
+
+		JsonObject lobbyPvp = null;
+		try {
+			lobbyPvp = GsonFileUtils.saveResourceIfNotAvailable("lobby-pvp.json");
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		try {
+			JsonObject kitsElement = GsonFileUtils.saveResourceIfNotAvailable("kits.json");
+			kitsConfiguration.load(kitsElement);
+
+			if (kitsConfiguration.isEnabled()) {
+				new KitsLoader(this.kitsManager).load(UhcCore.getPlugin().getDataFolder().toPath());
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
 		}
 
 		// Dependencies
@@ -420,9 +450,6 @@ public class GameManager{
 		configuration.load(cfg, storage);
 
 		lobbyPvpConfiguration.load(lobbyPvp);
-
-		// Load kits
-		KitsManager.loadKits();
 
 		// Load crafts
 		CraftsManager.loadBannedCrafts();
@@ -459,6 +486,9 @@ public class GameManager{
 		listeners.add(new EntityDamageListener(this));
 		if (lobbyPvpConfiguration.isEnabled()) {
 			listeners.add(new LobbyPvpListener(this, lobbyPvpManager));
+		}
+		if (kitsConfiguration.isEnabled()) {
+			listeners.add(new UhcInventoryListener());
 		}
 		for(Listener listener : listeners){
 			Bukkit.getServer().getPluginManager().registerEvents(listener, UhcCore.getPlugin());
@@ -561,6 +591,8 @@ public class GameManager{
 		registerCommand("upload", new UploadCommandExecutor());
 		registerCommand("deathmatch", new DeathmatchCommandExecutor(this));
 		registerCommand("team", new TeamCommandExecutor(this));
+
+		new KitCommand(this).register();
 	}
 
 	private void registerCommand(String commandName, CommandExecutor executor){

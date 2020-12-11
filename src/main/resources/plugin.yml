@@ -68,3 +68,5 @@ commands:
   team:
     description: "Used to manage teams."
     usage: /<command> <sub-command>
+  kit:
+    description: ''
