@@ -5,6 +5,8 @@ import com.gmail.val59000mc.customitems.*;
 import com.gmail.val59000mc.exceptions.UhcTeamException;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.game.GameState;
+import com.gmail.val59000mc.inventory.kit.KitSelectionInventory;
+import com.gmail.val59000mc.kit.KitsManager;
 import com.gmail.val59000mc.languages.Lang;
 import com.gmail.val59000mc.players.PlayerState;
 import com.gmail.val59000mc.players.PlayersManager;
@@ -28,10 +30,7 @@ import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.inventory.BrewerInventory;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryView;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -50,12 +49,12 @@ public class ItemsListener implements Listener {
 		Player player = event.getPlayer();
 		GameManager gm = GameManager.getGameManager();
 		UhcPlayer uhcPlayer = gm.getPlayersManager().getUhcPlayer(player);
-		ItemStack hand = player.getItemInHand();
+		ItemStack hand = player.getInventory().getItemInMainHand();
 
 		if (GameItem.isGameItem(hand)){
 			event.setCancelled(true);
 			GameItem gameItem = GameItem.getGameItem(hand);
-			handleGameItemInteract(gameItem, player, uhcPlayer, hand);
+			if (event.getHand() == EquipmentSlot.HAND) handleGameItemInteract(gameItem, player, uhcPlayer, hand);
 			return;
 		}
 
@@ -118,19 +117,20 @@ public class ItemsListener implements Listener {
 		}
 		
 		// Click on a player head to join a team
-		if(event.getView().getTitle().equals(Lang.ITEMS_KIT_INVENTORY)){
-			if(KitsManager.isKitItem(item)){
-				event.setCancelled(true);
-				Kit kit = KitsManager.getKitByName(item.getItemMeta().getDisplayName());
-				if(kit.canBeUsedBy(player, gm.getConfiguration())){
-					uhcPlayer.setKit(kit);
-					uhcPlayer.sendMessage(Lang.ITEMS_KIT_SELECTED.replace("%kit%", kit.getName()));
-				}else{
-					uhcPlayer.sendMessage(Lang.ITEMS_KIT_NO_PERMISSION);
-				}
-				player.closeInventory();
-			}
-		}
+//		if(event.getView().getTitle().equals(Lang.ITEMS_KIT_INVENTORY)){
+//			if(KitsManager.isKitItem(item)){
+//				event.setCancelled(true);
+//				Kit kit = KitsManager.getKitByName(item.getItemMeta().getDisplayName());
+//				if(kit.canBeUsedBy(player, gm.getConfiguration())){
+//					uhcPlayer.setKit(kit);
+//					uhcPlayer.sendMessage(Lang.ITEMS_KIT_SELECTED.replace("%kit%", kit.getName()));
+//				}else{
+//					uhcPlayer.sendMessage(Lang.ITEMS_KIT_NO_PERMISSION);
+//				}
+//				player.closeInventory();
+//			}
+//		}
+		// fixme
 
 		if (UhcItems.isTeamSkullItem(item)){
 			event.setCancelled(true);
@@ -226,7 +226,15 @@ public class ItemsListener implements Listener {
 				UhcItems.openTeamSettingsInventory(player);
 				break;
 			case KIT_SELECTION:
-				KitsManager.openKitSelectionInventory(player);
+				GameManager gameManager = GameManager.getGameManager();
+				KitsManager kitsManager = gameManager.getKitsManager();
+
+				if (uhcPlayer.getKitUpgrades().isLoaded()) {
+					new KitSelectionInventory(kitsManager, uhcPlayer).openFor(player);
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "Твои киты еще не загружены, обратись к администратору! ");
+				}
 				break;
 			case CUSTOM_CRAFT_BOOK:
 				CraftsManager.openCraftBookInventory(player);
