@@ -403,9 +403,7 @@ public class ItemsListener implements Listener {
 		ItemStack item = e.getItem();
 		if (item == null) return;
 		ItemStack goldenHead = UhcItems.createGoldenHead();
-		item.setAmount(1);
-		goldenHead.setAmount(1);
-		if (item.equals(goldenHead)) {
+		if (item.isSimilar(goldenHead)) {
 			e.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 200, 1));
 		}
 	}
