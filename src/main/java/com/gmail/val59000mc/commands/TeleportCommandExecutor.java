@@ -52,6 +52,7 @@ public class TeleportCommandExecutor implements CommandExecutor{
 			}
 
 			Location loc = new Location(player.getWorld(), x, y, z);
+			player.setSpectatorTarget(null);
 			player.teleport(loc);
 
 			player.sendMessage(Lang.COMMAND_SPECTATING_TELEPORT.replace("%player%", x + "/" + y + "/" + z));
@@ -69,7 +70,7 @@ public class TeleportCommandExecutor implements CommandExecutor{
 				sender.sendMessage(ChatColor.RED + "That player can not be found!");
 				return true;
 			}
-
+			player1.setSpectatorTarget(null);
 			player1.teleport(player2.getLocation());
 
 			player.sendMessage(Lang.COMMAND_SPECTATING_TELEPORT.replace("%player%", player1.getName()));
@@ -95,6 +96,7 @@ public class TeleportCommandExecutor implements CommandExecutor{
 		}
 
 		uhcPlayer.sendMessage(Lang.COMMAND_SPECTATING_TELEPORT.replace("%player%", uhcTarget.getName()));
+		player.setSpectatorTarget(null);
 		player.teleport(target);
 		return true;
 	}

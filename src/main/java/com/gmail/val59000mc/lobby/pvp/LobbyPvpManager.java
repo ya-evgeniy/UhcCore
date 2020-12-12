@@ -4,6 +4,9 @@ import com.gmail.val59000mc.configuration.LobbyPvpConfiguration;
 import com.gmail.val59000mc.customitems.UhcItems;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.lobby.pvp.zone.Zone;
+import com.gmail.val59000mc.players.PlayerState;
+import com.gmail.val59000mc.players.PlayersManager;
+import com.gmail.val59000mc.players.UhcPlayer;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -45,8 +48,10 @@ public class LobbyPvpManager {
         player.setExhaustion(20);
         player.setFoodLevel(20);
         player.setExp(0);
-
-        UhcItems.giveLobbyItemsTo(player);
+        UhcPlayer uhcPlayer = gameManager.getPlayersManager().getUhcPlayer(player);
+        if (uhcPlayer.getState().equals(PlayerState.WAITING)){
+            UhcItems.giveLobbyItemsTo(player);
+        }
     }
 
     public void justRemove(UUID uniqueId) {

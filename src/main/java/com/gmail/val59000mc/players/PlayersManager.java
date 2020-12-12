@@ -958,13 +958,14 @@ public class PlayersManager{
 
 	public void spawnOfflineZombieFor(Player player){
 		UhcPlayer uhcPlayer = getUhcPlayer(player);
-
 		Zombie zombie = (Zombie) player.getWorld().spawnEntity(player.getLocation(), EntityType.ZOMBIE);
 		zombie.setCustomName(uhcPlayer.getDisplayName());
 		zombie.setCustomNameVisible(true);
 		// 1.8 doesn't have setAI method so use VersionUtils.
-		VersionUtils.getVersionUtils().setEntityAI(zombie, false);
-		zombie.setBaby(false);
+		// DISABLED FOR ORGANICA GAMES
+		// VersionUtils.getVersionUtils().setEntityAI(zombie, false);
+		zombie.setAI(false);
+		zombie.setBaby(!player.getLocation().add(0, 1, 0).getBlock().isPassable());
 		zombie.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 999999, 1, true, true));
 
 		EntityEquipment equipment = zombie.getEquipment();
