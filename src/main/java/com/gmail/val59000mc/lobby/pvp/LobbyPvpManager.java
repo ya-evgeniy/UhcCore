@@ -39,7 +39,7 @@ public class LobbyPvpManager {
     public void removePlayer(Player player) {
         this.playersInZone.remove(player.getUniqueId());
 
-        player.getInventory().clear();
+
         for (PotionEffect effect : player.getActivePotionEffects()) player.removePotionEffect(effect.getType());
 
         player.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 99999999, 0, true, false));
@@ -48,10 +48,8 @@ public class LobbyPvpManager {
         player.setExhaustion(20);
         player.setFoodLevel(20);
         player.setExp(0);
-        UhcPlayer uhcPlayer = gameManager.getPlayersManager().getUhcPlayer(player);
-        if (uhcPlayer.getState().equals(PlayerState.WAITING)){
-            UhcItems.giveLobbyItemsTo(player);
-        }
+        player.getInventory().clear();
+        UhcItems.giveLobbyItemsTo(player);
     }
 
     public void justRemove(UUID uniqueId) {

@@ -2,6 +2,7 @@ package com.gmail.val59000mc.commands;
 
 import com.gmail.val59000mc.customitems.UhcItems;
 import com.gmail.val59000mc.exceptions.UhcPlayerDoesntExistException;
+import com.gmail.val59000mc.exceptions.UhcTeamException;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.game.GameState;
 import com.gmail.val59000mc.languages.Lang;
@@ -38,76 +39,113 @@ public class TeamCommandExecutor implements CommandExecutor{
             player.sendMessage("Send command help");
             return true;
         }
-
-        // Don't allow the creation of teams during the game.
-        if (gameManager.getGameState() != GameState.WAITING){
-            return true;
-        }
-
         String subCommand = args[0].toLowerCase();
+        // Don't allow the creation of teams during the game.
+        if (gameManager.getGameState() == GameState.WAITING) {
+            if (subCommand.equals("invite")) {
+                if (!uhcPlayer.isTeamLeader()) {
+                    player.sendMessage(Lang.TEAM_MESSAGE_NOT_LEADER);
+                    return true;
+                }
 
-        if (subCommand.equals("invite")){
-            if (!uhcPlayer.isTeamLeader()){
-                player.sendMessage(Lang.TEAM_MESSAGE_NOT_LEADER);
+                if (args.length != 2){
+                    player.sendMessage("Usage: /team invite <player>");
+                    return true;
+                }
+
+                Player invitePlayer = Bukkit.getPlayer(args[1]);
+
+                if (invitePlayer == null){
+                    player.sendMessage(Lang.TEAM_MESSAGE_PLAYER_NOT_ONLINE.replace("%player%", args[1]));
+                    return true;
+                }
+
+                UhcPlayer uhcInvitePlayer = pm.getUhcPlayer(invitePlayer);
+
+                if (uhcPlayer.getTeam().contains(uhcInvitePlayer)){
+                    player.sendMessage(Lang.TEAM_MESSAGE_ALREADY_IN_TEAM);
+                    return true;
+                }
+
+                if (uhcInvitePlayer.getTeamInvites().contains(uhcPlayer.getTeam())){
+                    uhcPlayer.sendMessage(Lang.TEAM_MESSAGE_INVITE_ALREADY_SENT);
+                    return true;
+                }
+
+                uhcInvitePlayer.inviteToTeam(uhcPlayer.getTeam());
                 return true;
             }
 
-            if (args.length != 2){
-                player.sendMessage("Usage: /team invite <player>");
+            if (subCommand.equals("invite-reply")){
+                if (args.length != 2){
+                    player.sendMessage("Usage: /team invite-reply <player>");
+                    return true;
+                }
+
+                UhcPlayer teamLeader;
+
+                try{
+                    teamLeader = pm.getUhcPlayer(args[1]);
+                }catch (UhcPlayerDoesntExistException ex){
+                    player.sendMessage(Lang.TEAM_MESSAGE_PLAYER_NOT_ONLINE.replace("%player%", args[1]));
+                    return true;
+                }
+
+                UhcTeam team = teamLeader.getTeam();
+
+                if (!uhcPlayer.getTeamInvites().contains(team)){
+                    uhcPlayer.sendMessage(ChatColor.RED + "No invite from that team!");
+                    return true;
+                }
+
+                UhcItems.openTeamReplyInviteInventory(player, team);
                 return true;
             }
-
-            Player invitePlayer = Bukkit.getPlayer(args[1]);
-
-            if (invitePlayer == null){
-                player.sendMessage(Lang.TEAM_MESSAGE_PLAYER_NOT_ONLINE.replace("%player%", args[1]));
-                return true;
-            }
-
-            UhcPlayer uhcInvitePlayer = pm.getUhcPlayer(invitePlayer);
-
-            if (uhcPlayer.getTeam().contains(uhcInvitePlayer)){
-                player.sendMessage(Lang.TEAM_MESSAGE_ALREADY_IN_TEAM);
-                return true;
-            }
-
-            if (uhcInvitePlayer.getTeamInvites().contains(uhcPlayer.getTeam())){
-                uhcPlayer.sendMessage(Lang.TEAM_MESSAGE_INVITE_ALREADY_SENT);
-                return true;
-            }
-
-            uhcInvitePlayer.inviteToTeam(uhcPlayer.getTeam());
-            return true;
         }
-
-        if (subCommand.equals("invite-reply")){
-            if (args.length != 2){
-                player.sendMessage("Usage: /team invite-reply <player>");
+        if (subCommand.equals("join")) {
+            if (!sender.hasPermission("uhc-core.commands.teamManage")) {
+                player.sendMessage(ChatColor.YELLOW + "You don't have permission to do this!");
                 return true;
             }
-
-            UhcPlayer teamLeader;
-
+            if (args.length != 3){
+                player.sendMessage("Usage: /team join <playerWithTeam> <playerForJoin>");
+                return true;
+            }
+            UhcPlayer playerWithTeam;
+            UhcPlayer playerForJoin;
             try{
-                teamLeader = pm.getUhcPlayer(args[1]);
+                playerWithTeam = pm.getUhcPlayer(args[1]);
+                playerForJoin = pm.getUhcPlayer(args[2]);
             }catch (UhcPlayerDoesntExistException ex){
-                player.sendMessage(Lang.TEAM_MESSAGE_PLAYER_NOT_ONLINE.replace("%player%", args[1]));
+                player.sendMessage("One of the player is not online!");
                 return true;
             }
-
-            UhcTeam team = teamLeader.getTeam();
-
-            if (!uhcPlayer.getTeamInvites().contains(team)){
-                uhcPlayer.sendMessage(ChatColor.RED + "No invite from that team!");
-                return true;
-            }
-
-            UhcItems.openTeamReplyInviteInventory(player, team);
+            UhcTeam team = playerWithTeam.getTeam();
+            team.joinUnsafe(playerForJoin);
+            player.sendMessage("Player joined to the Team"); //TODO TEXT
             return true;
         }
-
+        if (subCommand.equals("leave")) {
+            if (!sender.hasPermission("uhc-core.commands.teamManage")) {
+                player.sendMessage(ChatColor.YELLOW + "You don't have permission to do this!");
+                return true;
+            }
+            if (args.length != 2){
+                player.sendMessage("Usage: /team leave <playerToLeaveFromTeam>");
+                return true;
+            }
+            UhcPlayer playerToLeave;
+            try{
+                playerToLeave = pm.getUhcPlayer(args[1]);
+            }catch (UhcPlayerDoesntExistException ex){
+                player.sendMessage("Player is not online!");
+                return true;
+            }
+            playerToLeave.getTeam().leaveUnsafe(playerToLeave);
+            player.sendMessage("Player has been left from team."); //TODO FIX TEXT
+            return true;
+        }
         player.sendMessage("Invalid sub command");
         return true;
     }
-
 }

@@ -427,7 +427,6 @@ public class GameManager{
 		catch (Exception e) {
 			e.printStackTrace();
 		}
-
 		try {
 			JsonObject kitsElement = GsonFileUtils.saveResourceIfNotAvailable("kits.json");
 			kitsConfiguration.load(kitsElement);
@@ -504,6 +503,7 @@ public class GameManager{
 		if (!configuration.getAnnounceAdvancements() && UhcCore.getVersion() >= 12){
 			VersionUtils.getVersionUtils().setGameRuleValue(overworld, "announceAdvancements", false);
 		}
+		overworld.setHardcore(true);
 		VersionUtils.getVersionUtils().setGameRuleValue(overworld, "doDaylightCycle", false);
 		VersionUtils.getVersionUtils().setGameRuleValue(overworld, "commandBlockOutput", false);
 		VersionUtils.getVersionUtils().setGameRuleValue(overworld, "logAdminCommands", false);
@@ -533,6 +533,7 @@ public class GameManager{
 			} else {
 				VersionUtils.getVersionUtils().setGameRuleValue(nether, "reducedDebugInfo", false);
 			}
+			nether.setHardcore(true);
 			VersionUtils.getVersionUtils().setGameRuleValue(nether, "commandBlockOutput", false);
 			VersionUtils.getVersionUtils().setGameRuleValue(nether, "logAdminCommands", false);
 			VersionUtils.getVersionUtils().setGameRuleValue(nether, "sendCommandFeedback", false);
@@ -553,6 +554,7 @@ public class GameManager{
 			} else {
 				VersionUtils.getVersionUtils().setGameRuleValue(theEnd, "reducedDebugInfo", false);
 			}
+			theEnd.setHardcore(true);
 			VersionUtils.getVersionUtils().setGameRuleValue(theEnd, "commandBlockOutput", false);
 			VersionUtils.getVersionUtils().setGameRuleValue(theEnd, "logAdminCommands", false);
 			VersionUtils.getVersionUtils().setGameRuleValue(theEnd, "sendCommandFeedback", false);
