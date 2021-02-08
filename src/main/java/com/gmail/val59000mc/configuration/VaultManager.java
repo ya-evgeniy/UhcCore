@@ -9,6 +9,8 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
+import java.util.UUID;
+
 public class VaultManager {
 	
     private static Economy economy;
@@ -34,10 +36,22 @@ public class VaultManager {
 		Validate.notNull(player);
     	return economy == null ? 0 : economy.getBalance(player);
 	}
+	public static void addMoney(final UUID uuid, final double amount) {
+		Validate.notNull(uuid);
+		if(!GameManager.getGameManager().getConfiguration().getVaultLoaded()){
+			return;
+		}
 
+		if(economy == null){
+			Bukkit.getLogger().warning("[UhcCore] Vault is not loaded! Couldn't pay "+amount+" to "+uuid+"!");
+			return;
+		}
+		final OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
+
+		Bukkit.getScheduler().runTaskAsynchronously(UhcCore.getPlugin(), () -> economy.depositPlayer(offlinePlayer, amount));
+	}
 	public static void addMoney(final Player player, final double amount){
 		Validate.notNull(player);
-
 		if(!GameManager.getGameManager().getConfiguration().getVaultLoaded()){
 			return;
 		}

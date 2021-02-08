@@ -206,6 +206,9 @@ public class JsonItemUtils{
                     case "color":
                         meta = parseColor(meta, entry.getValue().getAsInt());
                         break;
+                    case "custom-model-data":
+                        meta.setCustomModelData(entry.getValue().getAsInt());
+                        break;
                 }
             }
 

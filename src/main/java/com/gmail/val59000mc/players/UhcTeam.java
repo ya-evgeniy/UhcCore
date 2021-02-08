@@ -50,7 +50,7 @@ public class UhcTeam {
 	}
 
 	public String getPrefix() {
-		return prefix + "\u25A0 ";
+		return prefix + " ";
 	}
 
 	public String getColor(){
@@ -155,23 +155,37 @@ public class UhcTeam {
 				for(UhcPlayer teamMember : getMembers()){
 					teamMember.sendMessage(Lang.TEAM_MESSAGE_PLAYER_JOINS.replace("%player%",player.getName()));
 				}
-				getMembers().add(player);
+				joinUnsafe(player);
+				/*getMembers().add(player);
 				player.setTeam(this);
 
 				// Update player tab
 				ScoreboardManager scoreboardManager = GameManager.getGameManager().getScoreboardManager();
-				scoreboardManager.updatePlayerTab(player);
+				scoreboardManager.updatePlayerTab(player);*/
 			}
 		}else{
 			throw new UhcTeamException(Lang.TEAM_MESSAGE_PLAYER_ALREADY_IN_TEAM.replace("%player%", player.getName()));
 		}
 	}
+	public void joinUnsafe(UhcPlayer player) {
+		getMembers().add(player);
+		player.setTeam(this);
 
+		// Update player tab
+		ScoreboardManager scoreboardManager = GameManager.getGameManager().getScoreboardManager();
+		scoreboardManager.updatePlayerTab(player);
+	}
 	public boolean isFull() {
 		MainConfiguration cfg = GameManager.getGameManager().getConfiguration();
 		return (cfg.getMaxPlayersPerTeam() == getMembers().size());
 	}
+	public void leaveUnsafe(UhcPlayer player) {
+		getMembers().remove(player);
+		player.setTeam(new UhcTeam(player));
 
+		// Update player tab
+		GameManager.getGameManager().getScoreboardManager().updatePlayerTab(player);
+	}
 	public void leave(UhcPlayer player) throws UhcTeamException {
 		if(player.canLeaveTeam()){
 

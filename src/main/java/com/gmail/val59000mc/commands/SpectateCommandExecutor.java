@@ -52,6 +52,7 @@ public class SpectateCommandExecutor implements CommandExecutor{
         gameManager.getScoreboardManager().updatePlayerTab(uhcPlayer);
 
         // Clear lobby items
+
         player.getInventory().clear();
 
         if (!uhcPlayer.getTeam().isSolo()){

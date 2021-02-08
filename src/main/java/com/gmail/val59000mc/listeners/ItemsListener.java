@@ -400,9 +400,10 @@ public class ItemsListener implements Listener {
 
 	@EventHandler
 	public void onPlayerItemConsume(PlayerItemConsumeEvent e){
-		if (e.getItem() == null) return;
-
-		if (e.getItem().equals(UhcItems.createGoldenHead())){
+		ItemStack item = e.getItem();
+		if (item == null) return;
+		ItemStack goldenHead = UhcItems.createGoldenHead();
+		if (item.isSimilar(goldenHead)) {
 			e.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 200, 1));
 		}
 	}
