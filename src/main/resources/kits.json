@@ -1,0 +1,27 @@
+{
+
+	"enabled": true,
+
+	"groups": [
+		{
+			"id": "sponsor",
+			"lines": 1
+		}
+	],
+
+	"database": {
+		"enabled": false,
+
+		"url": "jdbc:mysql://%s:%s/%s",
+
+		"ip": "",
+		"port": 3306,
+
+		"db": "",
+		"table": "uhccore_kit_upgrades",
+
+		"username": "",
+		"password": ""
+	}
+
+}

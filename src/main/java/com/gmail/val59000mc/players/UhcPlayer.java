@@ -3,10 +3,11 @@ package com.gmail.val59000mc.players;
 import com.gmail.val59000mc.UhcCore;
 import com.gmail.val59000mc.customitems.Craft;
 import com.gmail.val59000mc.customitems.CraftsManager;
-import com.gmail.val59000mc.customitems.Kit;
 import com.gmail.val59000mc.events.UhcPlayerStateChangedEvent;
 import com.gmail.val59000mc.exceptions.UhcPlayerNotOnlineException;
 import com.gmail.val59000mc.game.GameManager;
+import com.gmail.val59000mc.kit.Kit;
+import com.gmail.val59000mc.kit.upgrade.PlayerKitUpgrades;
 import com.gmail.val59000mc.languages.Lang;
 import com.gmail.val59000mc.scenarios.Scenario;
 import com.gmail.val59000mc.utils.SpigotUtils;
@@ -34,7 +35,10 @@ public class UhcPlayer {
 	private PlayerState state;
 	private Location freezeLocation;
 	private boolean globalChat;
+
 	private Kit kit;
+	private PlayerKitUpgrades kitUpgrades;
+
 	private final Map<String,Integer> craftedItems;
 	private boolean hasBeenTeleportedToLocation;
 	private final Set<UhcTeam> teamInvites;
@@ -53,7 +57,10 @@ public class UhcPlayer {
 		this.team = new UhcTeam(this);
 		setState(PlayerState.WAITING);
 		this.globalChat = false;
+
 		this.kit = null;
+		this.kitUpgrades = new PlayerKitUpgrades();
+
 		this.craftedItems = new HashMap<>();
 		this.hasBeenTeleportedToLocation = false;
 		teamInvites = new HashSet<>();
@@ -362,6 +369,10 @@ public class UhcPlayer {
 
 	public Kit getKit() {
 		return kit;
+	}
+
+	public PlayerKitUpgrades getKitUpgrades() {
+		return kitUpgrades;
 	}
 
 	public void setKit(Kit kit) {

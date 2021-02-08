@@ -6,8 +6,7 @@ import com.gmail.val59000mc.utils.CompareUtils;
 import org.bukkit.ChatColor;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class TeamManager{
 
@@ -23,21 +22,15 @@ public class TeamManager{
         ChatColor.AQUA.toString(),
         ChatColor.LIGHT_PURPLE.toString()
     };
-
     private static final String[] TEAM_COLOR_VARIATIONS = new String[]{
-        "",
-        ChatColor.BOLD.toString(),
-        ChatColor.ITALIC.toString(),
-        ChatColor.UNDERLINE.toString(),
-        ChatColor.BOLD.toString() + ChatColor.ITALIC.toString(),
-        ChatColor.BOLD.toString() + ChatColor.UNDERLINE.toString(),
-        ChatColor.ITALIC.toString() + ChatColor.UNDERLINE.toString(),
-        ChatColor.ITALIC.toString() + ChatColor.UNDERLINE.toString() + ChatColor.BOLD.toString()
+        "🪓", "🗡", "⚔", "🛡", "⚗", "🧪", "⚓", "🏹", "🎣",
+        "⭐",  "⚡", "🔥", "🌧", "☃", "☂", "🌊", "🔱", "✝",
+        "⌚",  "⌛", "⛏", "☠", "★", "☽", "☻", "♫", "✉"
     };
 
     private final PlayersManager playersManager;
     private int lastTeamNumber;
-    private List<String> prefixes;
+    private Set<String> prefixes;
 
     public TeamManager(PlayersManager playersManager){
         this.playersManager = playersManager;
@@ -104,8 +97,10 @@ public class TeamManager{
     }
 
     private void loadPrefixes(){
-        prefixes = new ArrayList<>();
-
+        prefixes = new LinkedHashSet<>();
+        for (int i = 0; i < Math.max(TEAM_COLOR_VARIATIONS.length, TEAM_COLORS.length); i++) {
+            prefixes.add(TEAM_COLORS[i % TEAM_COLORS.length] + TEAM_COLOR_VARIATIONS[i % TEAM_COLOR_VARIATIONS.length]);
+        }
         for (String colorVariation : TEAM_COLOR_VARIATIONS){
             for (String color : TEAM_COLORS){
                 prefixes.add(color + colorVariation);
@@ -135,7 +130,7 @@ public class TeamManager{
     public String getTeamPrefix(){
         List<String> free = getFreePrefixes();
 
-        if (free.isEmpty()){
+        if (free.isEmpty()) {
             return ChatColor.DARK_GRAY.toString();
         }
 

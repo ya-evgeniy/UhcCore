@@ -6,6 +6,7 @@ import com.gmail.val59000mc.players.PlayerState;
 import com.gmail.val59000mc.players.UhcPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -52,6 +53,9 @@ public class TeleportCommandExecutor implements CommandExecutor{
 			}
 
 			Location loc = new Location(player.getWorld(), x, y, z);
+			if (player.getGameMode().equals(GameMode.SPECTATOR)) {
+				player.setSpectatorTarget(null);
+			}
 			player.teleport(loc);
 
 			player.sendMessage(Lang.COMMAND_SPECTATING_TELEPORT.replace("%player%", x + "/" + y + "/" + z));
@@ -69,7 +73,9 @@ public class TeleportCommandExecutor implements CommandExecutor{
 				sender.sendMessage(ChatColor.RED + "That player can not be found!");
 				return true;
 			}
-
+			if (player1.getGameMode().equals(GameMode.SPECTATOR)) {
+				player1.setSpectatorTarget(null);
+			}
 			player1.teleport(player2.getLocation());
 
 			player.sendMessage(Lang.COMMAND_SPECTATING_TELEPORT.replace("%player%", player1.getName()));
@@ -95,6 +101,9 @@ public class TeleportCommandExecutor implements CommandExecutor{
 		}
 
 		uhcPlayer.sendMessage(Lang.COMMAND_SPECTATING_TELEPORT.replace("%player%", uhcTarget.getName()));
+		if (player.getGameMode().equals(GameMode.SPECTATOR)) {
+			player.setSpectatorTarget(null);
+		}
 		player.teleport(target);
 		return true;
 	}

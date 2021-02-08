@@ -95,7 +95,7 @@ public enum GameItem{
             case TEAM_LIST:
                 return cfg.getMaxPlayersPerTeam() > 1;
             case KIT_SELECTION:
-                return KitsManager.isAtLeastOneKit();
+                return GameManager.getGameManager().getKitsManager().hasKits();
             case CUSTOM_CRAFT_BOOK:
                 return CraftsManager.isAtLeastOneCraft();
             case TEAM_COLOR_SELECTION:

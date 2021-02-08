@@ -4,7 +4,6 @@ import com.gmail.val59000mc.UhcCore;
 import com.gmail.val59000mc.configuration.MainConfiguration;
 import com.gmail.val59000mc.configuration.VaultManager;
 import com.gmail.val59000mc.customitems.GameItem;
-import com.gmail.val59000mc.customitems.KitsManager;
 import com.gmail.val59000mc.customitems.UhcItems;
 import com.gmail.val59000mc.events.*;
 import com.gmail.val59000mc.exceptions.UhcPlayerDoesntExistException;
@@ -13,6 +12,8 @@ import com.gmail.val59000mc.exceptions.UhcPlayerNotOnlineException;
 import com.gmail.val59000mc.exceptions.UhcTeamException;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.game.GameState;
+import com.gmail.val59000mc.kit.Kit;
+import com.gmail.val59000mc.kit.KitsManager;
 import com.gmail.val59000mc.languages.Lang;
 import com.gmail.val59000mc.scenarios.Scenario;
 import com.gmail.val59000mc.scenarios.ScenarioManager;
@@ -169,6 +170,10 @@ public class PlayersManager{
     public synchronized UhcPlayer newUhcPlayer(UUID uuid, String name){
         UhcPlayer newPlayer = new UhcPlayer(uuid, name);
         getPlayersList().add(newPlayer);
+
+		GameManager gameManager = GameManager.getGameManager();
+		gameManager.getKitsManager().getDbKitUpgrades().load(newPlayer);
+
         return newPlayer;
     }
 
@@ -206,12 +211,12 @@ public class PlayersManager{
 		return playingPlayers;
 	}
 
-	public void playerJoinsTheGame(Player player){
+	public void playerJoinsTheGame(Player player) {
 		UhcPlayer uhcPlayer;
 
 		if (doesPlayerExist(player)){
 			uhcPlayer = getUhcPlayer(player);
-		}else{
+		} else {
 			uhcPlayer = newUhcPlayer(player);
 			Bukkit.getLogger().warning("[UhcCore] None existent player joined!");
 		}
@@ -356,7 +361,13 @@ public class PlayersManager{
 				}
 				UhcItems.giveGameItemTo(player, GameItem.COMPASS_ITEM);
 				UhcItems.giveGameItemTo(player, GameItem.CUSTOM_CRAFT_BOOK);
-				KitsManager.giveKitTo(player);
+
+				KitsManager kitsManager = GameManager.getGameManager().getKitsManager();
+
+				Kit kit = uhcPlayer.getKit();
+				if (kit == null) kit = kitsManager.getRandomKit(uhcPlayer);
+
+				kitsManager.giveKit(kit, player);
 
 				if (!uhcPlayer.getStoredItems().isEmpty()){
 					player.getInventory().addItem(uhcPlayer.getStoredItems().toArray(new ItemStack[]{}));
@@ -373,7 +384,7 @@ public class PlayersManager{
 
 		//clear player armor
 		ItemStack[] emptyArmor = new ItemStack[4];
-		for(int i=0 ; i<emptyArmor.length ; i++){
+		for(int i = 0; i < emptyArmor.length; i++){
 			emptyArmor[i] = new ItemStack(Material.AIR);
 		}
 		player.getInventory().setArmorContents(emptyArmor);
@@ -444,14 +455,14 @@ public class PlayersManager{
 		}
 		winCommands.removeAll(winCommandsPlayer);
 
-		if(cfg.getEnableWinEvent()){
+		if(cfg.getEnableWinEvent()) {
 			for(UhcPlayer player : winners) {
 				try {
 					if (reward > 0) {
 						if (!Lang.EVENT_WIN_REWARD.isEmpty()) {
 							player.getPlayer().sendMessage(Lang.EVENT_WIN_REWARD.replace("%money%", "" + reward));
 						}
-						VaultManager.addMoney(player.getPlayer(), reward);
+						VaultManager.addMoney(player.getUuid(), reward);
 					}
 
 					winCommandsPlayer.forEach(cmd -> {
@@ -483,11 +494,13 @@ public class PlayersManager{
 
 	private List<UhcPlayer> getWinners(){
 		List<UhcPlayer> winners = new ArrayList<>();
-		for(UhcPlayer player : getPlayersList()){
+		for(UhcPlayer player : getPlayersList()) {
 			try{
 				Player connected = player.getPlayer();
-				if(connected.isOnline() && player.getState().equals(PlayerState.PLAYING))
-					winners.add(player);
+				if(connected.isOnline() && player.getState().equals(PlayerState.PLAYING)) {
+					winners.addAll(player.getTeam().getMembers());
+					break;
+				}
 			}catch(UhcPlayerNotOnlineException e){
 				// not adding the player to winner list
 			}
@@ -947,13 +960,14 @@ public class PlayersManager{
 
 	public void spawnOfflineZombieFor(Player player){
 		UhcPlayer uhcPlayer = getUhcPlayer(player);
-
 		Zombie zombie = (Zombie) player.getWorld().spawnEntity(player.getLocation(), EntityType.ZOMBIE);
 		zombie.setCustomName(uhcPlayer.getDisplayName());
 		zombie.setCustomNameVisible(true);
 		// 1.8 doesn't have setAI method so use VersionUtils.
-		VersionUtils.getVersionUtils().setEntityAI(zombie, false);
-		zombie.setBaby(false);
+		// DISABLED FOR ORGANICA GAMES
+		// VersionUtils.getVersionUtils().setEntityAI(zombie, false);
+		zombie.setAI(false);
+		zombie.setBaby(!player.getLocation().add(0, 1, 0).getBlock().isPassable());
 		zombie.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 999999, 1, true, true));
 
 		EntityEquipment equipment = zombie.getEquipment();
