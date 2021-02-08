@@ -41,6 +41,8 @@ public class UhcPlayer {
 
 	private final Map<String,Integer> craftedItems;
 	private boolean hasBeenTeleportedToLocation;
+	private boolean needInitialize = true;
+
 	private final Set<UhcTeam> teamInvites;
 	private final Set<Scenario> scenarioVotes;
 	private final Set<ItemStack> storedItems;
@@ -395,6 +397,14 @@ public class UhcPlayer {
 
 	public void setHasBeenTeleportedToLocation(boolean hasBeenTeleportedToLocation) {
 		this.hasBeenTeleportedToLocation = hasBeenTeleportedToLocation;
+	}
+
+	public boolean isNeedInitialize() {
+		return needInitialize;
+	}
+
+	public void setNeedInitialize(boolean needInitialize) {
+		this.needInitialize = needInitialize;
 	}
 
 }

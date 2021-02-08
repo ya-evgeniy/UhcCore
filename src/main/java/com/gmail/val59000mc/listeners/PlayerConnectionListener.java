@@ -9,7 +9,9 @@ import com.gmail.val59000mc.players.PlayerState;
 import com.gmail.val59000mc.players.PlayersManager;
 import com.gmail.val59000mc.players.UhcPlayer;
 import com.gmail.val59000mc.threads.KillDisconnectedPlayerThread;
+import com.gmail.val59000mc.threads.TeleportPlayersThread;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -52,18 +54,33 @@ public class PlayerConnectionListener implements Listener{
 	
 	@EventHandler(priority=EventPriority.HIGHEST)
 	public void onPlayerJoin(final PlayerJoinEvent event){
+		Player player = event.getPlayer();
+		UhcPlayer uhcPlayer = playersManager.getUhcPlayer(player);
+
+		GameState gameState = gameManager.getGameState();
+		if (gameState == GameState.STARTING || gameState == GameState.PLAYING) {
+			if (uhcPlayer.getState().equals(PlayerState.PLAYING) && uhcPlayer.isNeedInitialize()) {
+				TeleportPlayersThread.teleportPlayer(uhcPlayer);
+				playersManager.initializePlayer(player);
+			}
+		}
+
 		Bukkit.getScheduler().runTaskLater(UhcCore.getPlugin(), () -> playersManager.playerJoinsTheGame(event.getPlayer()), 1);
 	}
 
 	@EventHandler(priority=EventPriority.HIGHEST)
 	public void onPlayerDisconnect(PlayerQuitEvent event){
-		if(gameManager.getGameState().equals(GameState.WAITING) || gameManager.getGameState().equals(GameState.STARTING)){
-			UhcPlayer uhcPlayer = playersManager.getUhcPlayer(event.getPlayer());
 
-			if(gameManager.getGameState().equals(GameState.STARTING)){
+		Player player = event.getPlayer();
+		UhcPlayer uhcPlayer = playersManager.getUhcPlayer(player);
+
+		if(gameManager.getGameState().equals(GameState.WAITING) || gameManager.getGameState().equals(GameState.STARTING)) {
+			if(gameManager.getGameState().equals(GameState.STARTING) && !uhcPlayer.getState().equals(PlayerState.PLAYING)) {
 				playersManager.setPlayerSpectateAtLobby(uhcPlayer);
 				gameManager.broadcastInfoMessage(uhcPlayer.getName()+" has left while the game was starting and has been killed.");
 				playersManager.strikeLightning(uhcPlayer);
+
+				playersManager.getPlayersList().remove(uhcPlayer);
 			}
 
 			try{
@@ -71,23 +88,21 @@ public class PlayerConnectionListener implements Listener{
 			}catch (UhcTeamException e){
 				// Nothing
 			}
-
-			playersManager.getPlayersList().remove(uhcPlayer);
 		}
 
-		if(gameManager.getGameState().equals(GameState.PLAYING) || gameManager.getGameState().equals(GameState.DEATHMATCH)){
-			UhcPlayer uhcPlayer = playersManager.getUhcPlayer(event.getPlayer());
+		GameState gameState = gameManager.getGameState();
+		if(gameState.equals(GameState.PLAYING) || gameState.equals(GameState.STARTING) || gameState.equals(GameState.DEATHMATCH)){
 			if(gameManager.getConfiguration().getEnableKillDisconnectedPlayers() && uhcPlayer.getState().equals(PlayerState.PLAYING)){
 
 				KillDisconnectedPlayerThread killDisconnectedPlayerThread = new KillDisconnectedPlayerThread(
-						event.getPlayer().getUniqueId(),
+						player.getUniqueId(),
 						gameManager.getConfiguration().getMaxDisconnectPlayersTime()
 				);
 
 				Bukkit.getScheduler().runTaskLaterAsynchronously(UhcCore.getPlugin(), killDisconnectedPlayerThread,1);
 			}
 			if(gameManager.getConfiguration().getSpawnOfflinePlayers() && uhcPlayer.getState().equals(PlayerState.PLAYING)){
-				playersManager.spawnOfflineZombieFor(event.getPlayer());
+				if (uhcPlayer.isNeedInitialize()) playersManager.spawnOfflineZombieFor(player);
 			}
 			playersManager.checkIfRemainingPlayers();
 		}

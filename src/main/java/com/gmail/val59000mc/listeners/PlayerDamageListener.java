@@ -59,12 +59,18 @@ public class PlayerDamageListener implements Listener{
 				if (damageEvent.isPassOriginal()) return;
 			}
 
+			if (gameManager.getGameState() == GameState.STARTING) {
+				event.setCancelled(true);
+				return;
+			}
+
 			PlayersManager pm = gameManager.getPlayersManager();
 			UhcPlayer uhcPlayer = pm.getUhcPlayer(player);
 
 			PlayerState uhcPlayerState = uhcPlayer.getState();
 			if(uhcPlayerState.equals(PlayerState.WAITING) || uhcPlayerState.equals(PlayerState.DEAD)){
 				event.setCancelled(true);
+				return;
 			}
 
 			if (uhcPlayer.isFrozen()){

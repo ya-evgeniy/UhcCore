@@ -32,9 +32,9 @@ public class PlayerMovementListener implements Listener{
 
     private void handleLobbyPlayers(PlayerMoveEvent e) {
         Player player = e.getPlayer();
-        UhcPlayer uhcPlayer = playersManager.getUhcPlayer(player);
 
-        if (gameManager.getGameState().equals(GameState.WAITING) && player.getLocation().getY() < 0) {
+        GameState gameState = gameManager.getGameState();
+        if ((gameState.equals(GameState.WAITING) || gameState.equals(GameState.STARTING)) && player.getLocation().getY() < 0) {
             e.getPlayer().teleport(configuration.getLobbySpawnLocation());
         }
     }

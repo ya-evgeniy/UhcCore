@@ -352,26 +352,11 @@ public class PlayersManager{
 				{
 					player.removePotionEffect(effect.getType());
 				}
-				player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 999999, 1), false);
-				player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, 999999, 40), false);
-				player.setGameMode(GameMode.SURVIVAL);
+//				player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 999999, 1), false);
+//				player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_DIGGING, 999999, 40), false);
 				if(cfg.getEnableExtraHalfHearts()){
 					VersionUtils.getVersionUtils().setPlayerMaxHealth(player, 20+((double) cfg.getExtraHalfHearts()));
 					player.setHealth(20+((double) cfg.getExtraHalfHearts()));
-				}
-				UhcItems.giveGameItemTo(player, GameItem.COMPASS_ITEM);
-				UhcItems.giveGameItemTo(player, GameItem.CUSTOM_CRAFT_BOOK);
-
-				KitsManager kitsManager = GameManager.getGameManager().getKitsManager();
-
-				Kit kit = uhcPlayer.getKit();
-				if (kit == null) kit = kitsManager.getRandomKit(uhcPlayer);
-
-				kitsManager.giveKit(kit, player);
-
-				if (!uhcPlayer.getStoredItems().isEmpty()){
-					player.getInventory().addItem(uhcPlayer.getStoredItems().toArray(new ItemStack[]{}));
-					uhcPlayer.getStoredItems().clear();
 				}
 			} catch (UhcPlayerNotOnlineException e) {
 				// Nothing done
@@ -559,11 +544,44 @@ public class PlayersManager{
 
 			Bukkit.getScheduler().runTaskLater(UhcCore.getPlugin(), new TeleportPlayersThread(GameManager.getGameManager(), team), delayTeleportByTeam);
 			Bukkit.getLogger().info("[UhcCore] Teleporting a team in "+delayTeleportByTeam+" ticks");
-			delayTeleportByTeam += 10; // ticks
+			delayTeleportByTeam += 1000 / 20; // ticks
 		}
 
 		Bukkit.getScheduler().runTaskLater(UhcCore.getPlugin(), () -> GameManager.getGameManager().startWatchingEndOfGame(), delayTeleportByTeam + 20);
 
+	}
+
+	public void initializePlayer(Player player) {
+		UhcPlayer uhcPlayer = getUhcPlayer(player);
+		uhcPlayer.setNeedInitialize(false);
+
+		if (!uhcPlayer.getState().equals(PlayerState.PLAYING)) {
+			return;
+		}
+
+		for(PotionEffect effect : GameManager.getGameManager().getConfiguration().getPotionEffectOnStart()){
+			player.addPotionEffect(effect);
+		}
+
+		UhcItems.giveGameItemTo(player, GameItem.COMPASS_ITEM);
+		UhcItems.giveGameItemTo(player, GameItem.CUSTOM_CRAFT_BOOK);
+
+		KitsManager kitsManager = GameManager.getGameManager().getKitsManager();
+
+		Kit kit = uhcPlayer.getKit();
+		if (kit == null) kit = kitsManager.getRandomKit(uhcPlayer);
+
+		kitsManager.giveKit(kit, player);
+
+		if (!uhcPlayer.getStoredItems().isEmpty()){
+			player.getInventory().addItem(uhcPlayer.getStoredItems().toArray(new ItemStack[]{}));
+			uhcPlayer.getStoredItems().clear();
+		}
+
+		player.setGameMode(GameMode.SURVIVAL);
+
+		uhcPlayer.releasePlayer();
+		Bukkit.getPluginManager().callEvent(new PlayerStartsPlayingEvent(uhcPlayer));
 	}
 
 	private Location newRandomLocation(World world, double maxDistance){
@@ -768,12 +786,6 @@ public class PlayersManager{
 		for(Player player : Bukkit.getOnlinePlayers()){
 			player.removePotionEffect(PotionEffectType.BLINDNESS);
 			player.removePotionEffect(PotionEffectType.SLOW_DIGGING);
-		}
-
-		// Unfreeze players
-		for (UhcPlayer uhcPlayer : getPlayersList()){
-			uhcPlayer.releasePlayer();
-			Bukkit.getPluginManager().callEvent(new PlayerStartsPlayingEvent(uhcPlayer));
 		}
 
 		Bukkit.getScheduler().runTaskLater(UhcCore.getPlugin(), new CheckRemainingPlayerThread(GameManager.getGameManager()) , 40);

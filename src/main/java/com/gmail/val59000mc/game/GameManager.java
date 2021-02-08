@@ -7,7 +7,6 @@ import com.gmail.val59000mc.customitems.CraftsManager;
 import com.gmail.val59000mc.events.UhcGameStateChangedEvent;
 import com.gmail.val59000mc.events.UhcStartedEvent;
 import com.gmail.val59000mc.events.UhcStartingEvent;
-import com.gmail.val59000mc.inventory.UhcInventory;
 import com.gmail.val59000mc.kit.KitsLoader;
 import com.gmail.val59000mc.kit.KitsManager;
 import com.gmail.val59000mc.languages.Lang;
@@ -24,7 +23,6 @@ import com.gmail.val59000mc.schematics.UndergroundNether;
 import com.gmail.val59000mc.scoreboard.ScoreboardManager;
 import com.gmail.val59000mc.threads.*;
 import com.gmail.val59000mc.utils.*;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
@@ -34,11 +32,11 @@ import org.bukkit.World.Environment;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -391,6 +389,9 @@ public class GameManager{
 		worldBorder.startBorderThread();
 
 		Bukkit.getPluginManager().callEvent(new UhcStartedEvent());
+
+		for (Player player : Bukkit.getOnlinePlayers()) playerManager.initializePlayer(player);
+
 		UhcCore.getPlugin().addGameToStatistics();
 	}
 
