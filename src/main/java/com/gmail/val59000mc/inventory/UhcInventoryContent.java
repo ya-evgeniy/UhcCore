@@ -21,7 +21,8 @@ public class UhcInventoryContent extends UhcInventory {
     public void setItem(int index, @Nullable UhcInventoryItem item) {
         if (index > -1 && index < content.length) {
             this.content[index] = item;
-            this.setItem(index, item == null ? null : item.getDisplay());
+            this.inventory.setItem(index, item == null ? null : item.getDisplay());
+//            ReflectionInventory.setItem(inventory, index, item.getDisplay(), false, true);
         }
     }
 

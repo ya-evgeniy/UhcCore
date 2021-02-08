@@ -23,11 +23,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class KitSelectionInventory extends UhcInventoryContent {
 
@@ -134,10 +130,11 @@ public class KitSelectionInventory extends UhcInventoryContent {
             for (Enchantment enchantment : meta.getEnchants().keySet()) meta.removeEnchant(enchantment);
             if (kit == player.getKit()) meta.addEnchant(Enchantment.LUCK, 1, true);
 
-            List<String> lore = new ArrayList<>();
-            lore.add("[\"\"]");
-            lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"ЛКМ\",\"color\":\"green\"},{\"text\":\" - чтобы выбрать набор\",\"color\":\"light_gray\"}]");
-            lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"ПКМ\",\"color\":\"green\"},{\"text\":\" - чтобы прокачать или посмотреть набор\",\"color\":\"light_gray\"}]");
+            List<String> lorePrefix = new ArrayList<>(Arrays.asList(
+                    "",
+                    String.format("%s%sЛКМ%s - чтобы выбрать набор", ChatColor.RESET, ChatColor.GREEN, ChatColor.GRAY),
+                    String.format("%s%sПКМ%s - чтобы прокачать или просмотреть набор", ChatColor.RESET, ChatColor.GREEN, ChatColor.GRAY)
+            ));
 
             boolean hasPermission = false;
             try {
@@ -146,11 +143,11 @@ public class KitSelectionInventory extends UhcInventoryContent {
             }
 
             if (!hasPermission) {
-                lore.add("[\"\"]");
-                lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"Данный набор доступен только для " + kit.getGroup().getId() + "\",\"color\":\"red\"}]");
+                lorePrefix.add("");
+                lorePrefix.add(String.format("%s%sДанный набор доступен только для %s", ChatColor.RESET, ChatColor.RED, kit.getGroup().getId()));
             }
 
-            displayItems.setLore(meta, lore);
+            displayItems.setLore(meta, lorePrefix);
 
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_POTION_EFFECTS);
 

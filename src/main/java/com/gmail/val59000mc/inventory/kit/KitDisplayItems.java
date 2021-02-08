@@ -3,7 +3,7 @@ package com.gmail.val59000mc.inventory.kit;
 import com.gmail.val59000mc.kit.table.item.KitItem;
 import com.gmail.val59000mc.kit.table.item.KitItemGroup;
 import com.gmail.val59000mc.kit.table.item.KitItemStack;
-import com.gmail.val59000mc.utils.stack.ItemStackUtil;
+import org.bukkit.ChatColor;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
@@ -65,25 +65,19 @@ public class KitDisplayItems {
             }
         }
 
-        lore.add("[\"\"]");
-        lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"Предметы:\"}]");
-        for (ItemStack stack : givenItems) {
-            lore.add(
-                    String.format("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"- \"},{\"translate\":\"%s\",\"color\":\"white\"}]", ItemStackUtil.translatableKey(stack.getType()))
-            );
-        }
+        lore.add("");
+        lore.add(String.format("%s%sПредметы:", ChatColor.RESET, ChatColor.WHITE));
+        for (ItemStack stack : givenItems) lore.add(String.format("%s%s- %s", ChatColor.RESET, ChatColor.WHITE, stack.getType().name()));
 
         if (!randomizedItems.isEmpty()) {
-            lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"- Случайный предмет:\"}]");
+            lore.add(String.format("%s%s- Случайный предмет:", ChatColor.RESET, ChatColor.WHITE));
             for (ItemStack stack : randomizedItems) {
-                lore.add(
-                        String.format("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"  - \"},{\"translate\":\"%s\",\"color\":\"white\"}]", ItemStackUtil.translatableKey(stack.getType()))
-                );
+                lore.add(String.format("%s%s  -%s", ChatColor.RESET, ChatColor.WHITE, stack.getType().name()));
             }
         }
 
         lore.addAll(additionLore);
-        ItemStackUtil.setJsonLore(meta, lore);
+        meta.setLore(lore);
     }
 
 }

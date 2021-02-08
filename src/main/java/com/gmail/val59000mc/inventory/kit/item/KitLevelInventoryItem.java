@@ -10,7 +10,6 @@ import com.gmail.val59000mc.kit.upgrade.KitUpgrade;
 import com.gmail.val59000mc.kit.upgrade.KitUpgrades;
 import com.gmail.val59000mc.players.UhcPlayer;
 import com.gmail.val59000mc.utils.RomanNumber;
-import com.gmail.val59000mc.utils.stack.ItemStackUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -19,6 +18,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,41 +64,52 @@ public class KitLevelInventoryItem implements UhcInventoryItem {
 
         List<String> lore = new ArrayList<>();
         if (upgrade.getCost() > 0) {
-            lore.add(
-                    String.format("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"Стоимость: \",\"color\":\"gray\"},{\"text\":\"%d\",\"color\":\"gold\"}]", upgrade.getCost())
-            );
+            lore.add(String.format("%s%sСтоимость: %s%d", ChatColor.RESET, ChatColor.GRAY, ChatColor.GOLD, upgrade.getCost()));
+//            lore.add(
+//                    String.format("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"Стоимость: \",\"color\":\"gray\"},{\"text\":\"%d\",\"color\":\"gold\"}]", upgrade.getCost())
+//            );
         }
 
-        lore.add("[\"\"]");
+        lore.add("");
         if (upgrade.getLevel() <= currentPlayerLevel) {
             stack.setType(Material.LIME_STAINED_GLASS_PANE);
-            lore.add("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"Приобретено\",\"color\":\"green\"}]");
+            lore.add(String.format("%s%sПриобретено", ChatColor.RESET, ChatColor.GREEN));
+//            lore.add("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"Приобретено\",\"color\":\"green\"}]");
         }
         else if (nextPlayerLevel == upgrade.getLevel()) {
             if (upgrade.getCost() > VaultManager.getPlayerMoney(bukkitPlayer)) {
                 stack.setType(Material.RED_STAINED_GLASS_PANE);
-                lore.add("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"Недостаточно монет\",\"color\":\"gray\"}]");
+                lore.add(String.format("%s%sНедостаточно монет", ChatColor.RESET, ChatColor.RED));
+//                lore.add("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"Недостаточно монет\",\"color\":\"gray\"}]");
             }
             else {
                 stack.setType(Material.YELLOW_STAINED_GLASS_PANE);
-                lore.add("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"ЛКМ \",\"color\":\"green\"},{\"text\":\"- чтобы приобрести\",\"color\":\"gray\"}]");
+                lore.add(String.format("%s%sЛКМ %s- чтобы приобрести", ChatColor.RESET, ChatColor.GREEN, ChatColor.GRAY));
+//                lore.add("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"ЛКМ \",\"color\":\"green\"},{\"text\":\"- чтобы приобрести\",\"color\":\"gray\"}]");
             }
         }
         else {
             stack.setType(Material.RED_STAINED_GLASS_PANE);
-            lore.add("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"Предыдущее улучшение\",\"color\":\"red\"},{\"text\":\" не приобретено\",\"color\":\"red\"}]");
+            lore.add(String.format("%s%sПредыдущее улучшение не приобретено", ChatColor.RESET, ChatColor.RED));
+//            lore.add("[{\"text\":\"\",\"italic\":\"false\"},{\"text\":\"Предыдущее улучшение\",\"color\":\"red\"},{\"text\":\" не приобретено\",\"color\":\"red\"}]");
         }
 
         boolean hasPermission = bukkitPlayer.hasPermission("uhccore.kit." + kit.getId());
         if (!hasPermission) {
-            lore.add("[\"\"]");
-            lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"Данное улучшение недоступно для тебя\",\"color\":\"red\"}]");
+            lore.add("");
+            lore.add(String.format("%s%sДанное улучшение недоступно для тебя", ChatColor.RESET, ChatColor.RED));
+//            lore.add("[\"\"]");
+//            lore.add("[{\"text\":\"\",\"color\":\"white\",\"italic\":\"false\"},{\"text\":\"Данное улучшение недоступно для тебя\",\"color\":\"red\"}]");
         }
 
         String displayName = kit.getDisplay().hasTitle() ? kit.getDisplay().getTitle() : kit.getId();
 
-        ItemStackUtil.setDisplayName(stack, String.format("%s%s%s %s", ChatColor.RESET, ChatColor.GRAY, displayName, RomanNumber.fromDecimal(upgradeDisplayLevel)));
-        ItemStackUtil.setJsonLore(stack, lore);
+        ItemMeta meta = stack.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(String.format("%s%s%s %s", ChatColor.RESET, ChatColor.GRAY, displayName, RomanNumber.fromDecimal(upgradeDisplayLevel)));
+            meta.setLore(lore);
+            stack.setItemMeta(meta);
+        }
 
         return stack;
     }

@@ -4,9 +4,12 @@ import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class SafeNmsReflection {
 
@@ -43,6 +46,26 @@ public class SafeNmsReflection {
         }
     }
 
+    public static @Nullable Constructor<?> getConstructor(@Nullable Class<?> clazz, @Nullable Class<?>... args) {
+        if (clazz == null) return null;
+        if (Arrays.stream(args).anyMatch(Objects::isNull)) return null;
+        try {
+            return clazz.getConstructor(args);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static @Nullable Object newInstance(@Nullable Constructor<?> constructor, @Nullable Object... args) {
+        if (constructor == null) return null;
+        try {
+            return constructor.newInstance(args);
+        } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
+            return null;
+        }
+    }
+
     public static @Nullable Field getField(@Nullable Class<?> clazz, @NotNull String fieldName) {
         if (clazz == null) return null;
         try {
@@ -53,8 +76,9 @@ public class SafeNmsReflection {
         }
     }
 
-    public static @Nullable Method getMethod(@Nullable Class<?> clazz, @NotNull String name, @NotNull Class<?>... args) {
+    public static @Nullable Method getMethod(@Nullable Class<?> clazz, @NotNull String name, @Nullable Class<?>... args) {
         if (clazz == null) return null;
+        if (Arrays.stream(args).anyMatch(Objects::isNull)) return null;
         try {
             return clazz.getDeclaredMethod(name, args);
         } catch (NoSuchMethodException e) {
@@ -75,7 +99,20 @@ public class SafeNmsReflection {
         }
     }
 
-    public static @Nullable Object invokeField(@Nullable Object instance, @Nullable Method method, @Nullable Object... args) {
+    public static @Nullable Object getFieldValue(@Nullable Object instance, @Nullable Field field) {
+        if (field == null) return instance;
+
+        try {
+            field.setAccessible(true);
+            return field.get(instance);
+        }
+        catch (IllegalAccessException | SecurityException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static @Nullable Object invokeMethod(@Nullable Object instance, @Nullable Method method, @Nullable Object... args) {
         if (method == null) return null;
         try {
             method.setAccessible(true);
