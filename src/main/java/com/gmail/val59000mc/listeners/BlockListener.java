@@ -9,6 +9,7 @@ import com.gmail.val59000mc.utils.RandomUtils;
 import com.gmail.val59000mc.utils.UniversalMaterial;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -21,8 +22,14 @@ import org.bukkit.inventory.PlayerInventory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 public class BlockListener implements Listener{
+
+	private static final Random RANDOM = new Random();
 
 	private final MainConfiguration configuration;
 	private final Map<Material, BlockLootConfiguration> blockLoots;
@@ -74,9 +81,28 @@ public class BlockListener implements Listener{
 
 		World world = centerBlockLocation.getWorld();
 		breakingBlock.setType(Material.AIR);
-		if (world != null) world.dropItem(centerBlockLocation, lootConf.getLoot().clone());
 
-		if (lootConf.getAddXp() > 0) UhcItems.spawnExtraXp(centerBlockLocation, lootConf.getAddXp());
+		final int fortuneLevel = mainHandItem.getEnchantmentLevel(Enchantment.LOOT_BONUS_BLOCKS);
+		int additionCount = 0;
+		for (BlockLootConfiguration.FortuneAdditionalItems item : lootConf.getFortuneItems()) {
+			if (item.getLevel() == fortuneLevel) {
+				final int chance = item.getChance();
+				if (RANDOM.nextInt(100) <= chance) additionCount += item.getAdditionalCount();
+			}
+		}
+
+		final ItemStack clone = lootConf.getLoot().clone();
+		clone.setAmount(max(0, min(clone.getMaxStackSize(), clone.getAmount() + additionCount)));
+		if (world != null && clone.getAmount() > 0) {
+			world.dropItem(centerBlockLocation, clone);
+		}
+
+		int xp = lootConf.getAddXp();
+		if (lootConf.isAdditionalXpEnabled()) {
+			xp += RANDOM.nextInt(lootConf.getAdditionalXpRangeMax() - lootConf.getAdditionalXpRangeMin()) + lootConf.getAdditionalXpRangeMin();
+		}
+
+		if (xp > 0) UhcItems.spawnExtraXp(centerBlockLocation, xp);
 	}
 
 	private void handleShearedLeaves(BlockBreakEvent e){
