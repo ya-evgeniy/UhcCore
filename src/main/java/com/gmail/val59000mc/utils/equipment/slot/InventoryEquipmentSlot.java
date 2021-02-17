@@ -27,4 +27,28 @@ public class InventoryEquipmentSlot implements EquipmentSlot {
         }
     }
 
+    @Override
+    public String buildId() {
+        return "any";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        InventoryEquipmentSlot that = (InventoryEquipmentSlot) o;
+        return index == that.index;
+    }
+
+    @Override
+    public String toString() {
+        return "InventoryEquipmentSlot{" +
+                "index=" + index +
+                '}';
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(index);
+    }
 }

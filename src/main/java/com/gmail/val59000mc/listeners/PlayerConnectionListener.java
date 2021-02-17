@@ -70,27 +70,26 @@ public class PlayerConnectionListener implements Listener{
 
 	@EventHandler(priority=EventPriority.HIGHEST)
 	public void onPlayerDisconnect(PlayerQuitEvent event){
-
 		Player player = event.getPlayer();
 		UhcPlayer uhcPlayer = playersManager.getUhcPlayer(player);
 
-		if(gameManager.getGameState().equals(GameState.WAITING) || gameManager.getGameState().equals(GameState.STARTING)) {
-			if(gameManager.getGameState().equals(GameState.STARTING) && !uhcPlayer.getState().equals(PlayerState.PLAYING)) {
-				playersManager.setPlayerSpectateAtLobby(uhcPlayer);
-				gameManager.broadcastInfoMessage(uhcPlayer.getName()+" has left while the game was starting and has been killed.");
-				playersManager.strikeLightning(uhcPlayer);
-
-				playersManager.getPlayersList().remove(uhcPlayer);
-			}
-
-			try{
+		final GameState gameState = gameManager.getGameState();
+		if (gameState.equals(GameState.WAITING)) {
+			try {
 				uhcPlayer.getTeam().leave(uhcPlayer);
-			}catch (UhcTeamException e){
-				// Nothing
+			}
+			catch (UhcTeamException ignore) {
 			}
 		}
 
-		GameState gameState = gameManager.getGameState();
+		if(gameState.equals(GameState.STARTING) && !uhcPlayer.getState().equals(PlayerState.PLAYING)) {
+			playersManager.setPlayerSpectateAtLobby(uhcPlayer);
+			gameManager.broadcastInfoMessage(uhcPlayer.getName()+" has left while the game was starting and has been killed.");
+			playersManager.strikeLightning(uhcPlayer);
+
+			playersManager.getPlayersList().remove(uhcPlayer);
+		}
+
 		if(gameState.equals(GameState.PLAYING) || gameState.equals(GameState.STARTING) || gameState.equals(GameState.DEATHMATCH)){
 			if(gameManager.getConfiguration().getEnableKillDisconnectedPlayers() && uhcPlayer.getState().equals(PlayerState.PLAYING)){
 
@@ -101,8 +100,8 @@ public class PlayerConnectionListener implements Listener{
 
 				Bukkit.getScheduler().runTaskLaterAsynchronously(UhcCore.getPlugin(), killDisconnectedPlayerThread,1);
 			}
-			if(gameManager.getConfiguration().getSpawnOfflinePlayers() && uhcPlayer.getState().equals(PlayerState.PLAYING)){
-				if (uhcPlayer.isNeedInitialize()) playersManager.spawnOfflineZombieFor(player);
+			if (gameManager.getConfiguration().getSpawnOfflinePlayers() && gameState.equals(GameState.PLAYING) && uhcPlayer.getState().equals(PlayerState.PLAYING)) {
+				if (!uhcPlayer.isNeedInitialize()) playersManager.spawnOfflineZombieFor(player);
 			}
 			playersManager.checkIfRemainingPlayers();
 		}

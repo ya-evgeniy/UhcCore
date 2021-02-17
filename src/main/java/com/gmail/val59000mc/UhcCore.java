@@ -169,6 +169,7 @@ public class UhcCore extends JavaPlugin{
 		gameManager.getScenarioManager().disableAllScenarios();
 
 		gameManager.getKitsManager().getDbKitUpgrades().stop();
+		gameManager.getLobbyPvpManager().getDbLobbyPvp().stop();
 		Bukkit.getLogger().info("[UhcCore] Plugin disabled");
 	}
 

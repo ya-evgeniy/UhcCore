@@ -27,4 +27,28 @@ public class HotbarEquipmentSlot implements EquipmentSlot {
         }
     }
 
+    @Override
+    public String buildId() {
+        return "hotbar." + index;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HotbarEquipmentSlot that = (HotbarEquipmentSlot) o;
+        return index == that.index;
+    }
+
+    @Override
+    public String toString() {
+        return "HotbarEquipmentSlot{" +
+                "index=" + index +
+                '}';
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(index);
+    }
 }

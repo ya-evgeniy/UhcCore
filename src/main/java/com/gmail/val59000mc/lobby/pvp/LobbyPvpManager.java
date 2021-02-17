@@ -7,6 +7,7 @@ import com.gmail.val59000mc.lobby.pvp.zone.Zone;
 import com.gmail.val59000mc.players.PlayerState;
 import com.gmail.val59000mc.players.PlayersManager;
 import com.gmail.val59000mc.players.UhcPlayer;
+import com.gmail.val59000mc.utils.equipment.EquipmentContainer;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -20,9 +21,11 @@ public class LobbyPvpManager {
     private final GameManager gameManager;
 
     private Set<UUID> playersInZone = new HashSet<>();
+    private DbLobbyPvp dbLobbyPvp;
 
     public LobbyPvpManager(GameManager gameManager) {
         this.gameManager = gameManager;
+        this.dbLobbyPvp = new DbLobbyPvp(this.gameManager);
     }
 
     public void addPlayer(Player player) {
@@ -30,7 +33,13 @@ public class LobbyPvpManager {
         this.playersInZone.add(player.getUniqueId());
 
         LobbyPvpConfiguration conf = this.gameManager.getLobbyPvpConfiguration();
-        conf.getEquipmentContainer().equip(player, true);
+        final EquipmentContainer equipmentContainer = conf.getEquipmentContainer();
+        try {
+            final UhcPlayer uhcPlayer = gameManager.getPlayersManager().getUhcPlayer(player);
+            uhcPlayer.getLobbyPvpInventory().equip(equipmentContainer, player);
+        } catch (Exception e) {
+            equipmentContainer.equip(player, true);
+        }
 
         for (PotionEffect effect : player.getActivePotionEffects()) player.removePotionEffect(effect.getType());
         for (PotionEffect effect : conf.getEffects()) effect.apply(player);
@@ -76,6 +85,10 @@ public class LobbyPvpManager {
 
     public Stream<UUID> stream() {
         return this.playersInZone.stream();
+    }
+
+    public DbLobbyPvp getDbLobbyPvp() {
+        return dbLobbyPvp;
     }
 
 }

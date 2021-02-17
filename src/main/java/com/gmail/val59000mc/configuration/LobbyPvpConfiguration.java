@@ -8,6 +8,7 @@ import com.gmail.val59000mc.utils.ItemStackJsonDeserializer;
 import com.gmail.val59000mc.utils.equipment.Equipment;
 import com.gmail.val59000mc.utils.equipment.EquipmentContainer;
 import com.gmail.val59000mc.utils.equipment.EquipmentSlot;
+import com.gmail.val59000mc.utils.equipment.EquipmentUtils;
 import com.gmail.val59000mc.utils.equipment.slot.*;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -33,6 +34,15 @@ public class LobbyPvpConfiguration {
     private Location customRespawnLocation;
 
     private List<PotionEffect> effects = new ArrayList<>();
+
+    private boolean databaseEnabled;
+    private String url;
+    private String ip;
+    private int port;
+    private String db;
+    private String table;
+    private String username;
+    private String password;
 
     public LobbyPvpConfiguration(GameManager gameManager) {
         this.gameManager = gameManager;
@@ -87,6 +97,22 @@ public class LobbyPvpConfiguration {
         catch (JsonParseException e) {
             e.printStackTrace();
         }
+
+        final JsonElement databaseElement = json.get("database");
+        if (databaseElement.isJsonObject()) {
+            final JsonObject databaseObject = databaseElement.getAsJsonObject();
+
+            this.databaseEnabled = databaseObject.get("enabled").getAsBoolean();
+            if (!this.databaseEnabled) return;
+
+            this.url = databaseObject.get("url").getAsString();
+            this.ip = databaseObject.get("ip").getAsString();
+            this.port = databaseObject.get("port").getAsInt();
+            this.db = databaseObject.get("db").getAsString();
+            this.table = databaseObject.get("table").getAsString();
+            this.username = databaseObject.get("username").getAsString();
+            this.password = databaseObject.get("password").getAsString();
+        }
     }
 
     private void tryParseZones(JsonElement element) {
@@ -137,52 +163,17 @@ public class LobbyPvpConfiguration {
         for (JsonElement equipmentElement : equipment) {
             JsonObject equipmentObject = equipmentElement.getAsJsonObject();
 
+            final String id = equipmentObject.get("id").getAsString();
+            final boolean slotMutable = equipmentObject.get("slot_mutable").getAsBoolean();
+
             String slot = equipmentObject.get("slot").getAsString();
-            EquipmentSlot equipmentSlot;
-
-            switch (slot) {
-                case "helmet":
-                    equipmentSlot = new ArmorEquipmentSlot(ArmorEquipmentSlot.SlotType.HELMET);
-                    break;
-                case "chestplate":
-                    equipmentSlot = new ArmorEquipmentSlot(ArmorEquipmentSlot.SlotType.CHESTPLATE);
-                    break;
-                case "leggings":
-                    equipmentSlot = new ArmorEquipmentSlot(ArmorEquipmentSlot.SlotType.LEGGINGS);
-                    break;
-                case "boots":
-                    equipmentSlot = new ArmorEquipmentSlot(ArmorEquipmentSlot.SlotType.BOOTS);
-                    break;
-                case "offhand":
-                    equipmentSlot = new OffhandEquipmentSlot();
-                    break;
-                default:
-                    int i = slot.indexOf(".");
-                    if (i != -1) {
-                        try {
-                            i = Integer.parseInt(slot.substring(i));
-                        } catch (NumberFormatException ignore) {
-                            i = -1;
-                        }
-                    }
-
-                    if (slot.startsWith("hotbar")) {
-                        equipmentSlot = new HotbarEquipmentSlot(i);
-                    }
-                    else if (slot.startsWith("storage")) {
-                        equipmentSlot = new StorageEquipmentSlot(i);
-                    }
-                    else {
-                        equipmentSlot = new InventoryEquipmentSlot(i);
-                    }
-                    break;
-            }
+            EquipmentSlot equipmentSlot = EquipmentUtils.from(slot);
 
             JsonObject itemObject = equipmentObject.get("item").getAsJsonObject();
             try {
                 ItemStack stack = ItemStackJsonDeserializer.deserializeItemStack(itemObject);
                 equipments.add(new Equipment(
-                        equipmentSlot, stack
+                        id, slotMutable, equipmentSlot, stack
                 ));
             }
             catch (JsonParseException e) {
@@ -217,4 +208,35 @@ public class LobbyPvpConfiguration {
         return effects;
     }
 
+    public boolean isDatabaseEnabled() {
+        return databaseEnabled;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public String getDb() {
+        return db;
+    }
+
+    public String getTable() {
+        return table;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
 }

@@ -9,6 +9,7 @@ import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.kit.Kit;
 import com.gmail.val59000mc.kit.upgrade.PlayerKitUpgrades;
 import com.gmail.val59000mc.languages.Lang;
+import com.gmail.val59000mc.lobby.pvp.PlayerLobbyPvpInventory;
 import com.gmail.val59000mc.scenarios.Scenario;
 import com.gmail.val59000mc.utils.SpigotUtils;
 import com.gmail.val59000mc.utils.TimeUtils;
@@ -38,6 +39,8 @@ public class UhcPlayer {
 
 	private Kit kit;
 	private PlayerKitUpgrades kitUpgrades;
+
+	private PlayerLobbyPvpInventory lobbyPvpInventory = new PlayerLobbyPvpInventory();
 
 	private final Map<String,Integer> craftedItems;
 	private boolean hasBeenTeleportedToLocation;
@@ -405,6 +408,10 @@ public class UhcPlayer {
 
 	public void setNeedInitialize(boolean needInitialize) {
 		this.needInitialize = needInitialize;
+	}
+
+	public PlayerLobbyPvpInventory getLobbyPvpInventory() {
+		return lobbyPvpInventory;
 	}
 
 }

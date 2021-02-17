@@ -93,6 +93,10 @@ public class GameManager{
 		elapsedTime = 0;
 	}
 
+	public LobbyPvpManager getLobbyPvpManager() {
+		return lobbyPvpManager;
+	}
+
 	public static GameManager getGameManager(){
 		return gameManager;
 	}
@@ -335,6 +339,7 @@ public class GameManager{
 		Bukkit.getScheduler().scheduleSyncDelayedTask(UhcCore.getPlugin(), new PreStartThread(this),0);
 
 		kitsManager.getDbKitUpgrades().start();
+		lobbyPvpManager.getDbLobbyPvp().start();
 	}
 
 	public void startGame(){

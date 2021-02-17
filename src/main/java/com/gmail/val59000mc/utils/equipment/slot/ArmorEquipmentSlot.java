@@ -39,6 +39,41 @@ public class ArmorEquipmentSlot implements EquipmentSlot {
         }
     }
 
+    @Override
+    public String buildId() {
+        switch (type) {
+            case HELMET:
+                return "helmet";
+            case CHESTPLATE:
+                return "chestplate";
+            case LEGGINGS:
+                return "leggings";
+            case BOOTS:
+                return "boots";
+        }
+        return "any";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ArmorEquipmentSlot that = (ArmorEquipmentSlot) o;
+        return type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type);
+    }
+
+    @Override
+    public String toString() {
+        return "ArmorEquipmentSlot{" +
+                "type=" + type +
+                '}';
+    }
+
     public enum SlotType {
 
         HELMET,

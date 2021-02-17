@@ -8,10 +8,14 @@ import com.gmail.val59000mc.events.UhcLobbyPlayerKilledByPlayerEvent;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.game.GameState;
 import com.gmail.val59000mc.lobby.pvp.LobbyPvpManager;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.World;
+import com.gmail.val59000mc.lobby.pvp.PlayerLobbyPvpInventory;
+import com.gmail.val59000mc.players.UhcPlayer;
+import com.gmail.val59000mc.utils.equipment.Equipment;
+import com.gmail.val59000mc.utils.equipment.EquipmentContainer;
+import com.gmail.val59000mc.utils.equipment.EquipmentSlot;
+import com.gmail.val59000mc.utils.equipment.EquipmentUtils;
+import com.gmail.val59000mc.utils.equipment.slot.OffhandEquipmentSlot;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -19,8 +23,11 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 import java.util.Objects;
@@ -139,10 +146,145 @@ public class LobbyPvpListener implements Listener {
     }
 
     @EventHandler
-    public void on(InventoryClickEvent event) {
+    public void on(InventoryDragEvent event) {
         if (lobbyPvpManager.inZone(event.getWhoClicked().getUniqueId())) {
             if (gameManager.getGameState() == GameState.WAITING) {
                 event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void on(InventoryClickEvent event) {
+        if (lobbyPvpManager.inZone(event.getWhoClicked().getUniqueId())) {
+            if (gameManager.getGameState() == GameState.WAITING) {
+                if (event.getAction() != InventoryAction.PICKUP_ALL && event.getAction() != InventoryAction.PLACE_ALL && event.getAction() != InventoryAction.SWAP_WITH_CURSOR) {
+                    event.setCancelled(true);
+                    return;
+                }
+
+                try {
+                    final Player player = (Player) event.getWhoClicked();
+                    final UhcPlayer uhcPlayer = gameManager.getPlayersManager().getUhcPlayer(player);
+                    final PlayerLobbyPvpInventory inventory = uhcPlayer.getLobbyPvpInventory();
+
+                    final EquipmentContainer equipmentContainer = gameManager.getLobbyPvpConfiguration().getEquipmentContainer();
+
+                    final int targetIndex = event.getSlot();
+                    final EquipmentSlot targetSlot = EquipmentUtils.from(targetIndex);
+                    final String targetId = inventory.getItemId(equipmentContainer, targetSlot);
+
+                    if (targetSlot != null && targetId != null) {
+                        final Equipment equipment = equipmentContainer.getEquipmentByItemId(targetId);
+                        if (equipment != null && !equipment.isSlotMutable()) {
+                            event.setCancelled(true);
+                            return;
+                        }
+                    }
+
+                    if (inventory.getCursorId() == null) {
+
+                        if (targetSlot == null || targetId == null) {
+                            event.setCancelled(true);
+                            return;
+                        }
+
+                        final ItemStack item = player.getInventory().getItem(event.getSlot());
+                        if (item == null || item.getType().equals(Material.AIR)) {
+                            event.setCancelled(true);
+                            return;
+                        }
+
+                        inventory.setSourceIndex(targetIndex);
+                        inventory.setCursorId(targetId);
+                        inventory.setCursorSlot(targetSlot);
+
+                        return;
+                    }
+
+
+                    if (targetSlot == null) {
+                        event.setCancelled(true);
+                        return;
+                    }
+
+                    inventory.getPlayerEquipment().put(inventory.getCursorId(), targetSlot);
+                    inventory.setChanged(true);
+
+                    final ItemStack item = player.getInventory().getItem(event.getSlot());
+                    if (item == null || item.getType().equals(Material.AIR)) {
+                        if (targetId != null) {
+                            inventory.getPlayerEquipment().put(targetId, inventory.getCursorSlot());
+                        }
+                    }
+
+                    if (targetId == null) {
+                        inventory.setSourceIndex(-1);
+                        inventory.setCursorId(null);
+                        inventory.setCursorSlot(null);
+                    }
+                    else {
+                        inventory.getPlayerEquipment().remove(targetId);
+                        inventory.setSourceIndex(targetIndex);
+                        inventory.setCursorId(targetId);
+                        inventory.setCursorSlot(targetSlot);
+                    }
+                } catch (Exception e) {
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void on(PlayerSwapHandItemsEvent event) {
+        final Player player = event.getPlayer();
+        if (lobbyPvpManager.inZone(player.getUniqueId())) {
+            if (gameManager.getGameState() == GameState.WAITING) {
+                final int selectedSlot = player.getInventory().getHeldItemSlot();
+
+                final EquipmentSlot sourceSlot = EquipmentUtils.from(selectedSlot);
+                final EquipmentSlot targetSlot = new OffhandEquipmentSlot();
+
+                try {
+                    final UhcPlayer uhcPlayer = gameManager.getPlayersManager().getUhcPlayer(player);
+                    final PlayerLobbyPvpInventory inventory = uhcPlayer.getLobbyPvpInventory();
+
+                    final EquipmentContainer equipmentContainer = gameManager.getLobbyPvpConfiguration().getEquipmentContainer();
+
+                    final String sourceId = inventory.getItemId(equipmentContainer, sourceSlot);
+                    final String targetId = inventory.getItemId(equipmentContainer, targetSlot);
+
+                    if (sourceId == null && targetId == null) {
+                        return;
+                    }
+
+                    final Equipment sourceEquipment = equipmentContainer.getEquipmentByItemId(sourceId);
+                    final Equipment targetEquipment = equipmentContainer.getEquipmentByItemId(targetId);
+
+                    if (sourceEquipment != null && !sourceEquipment.isSlotMutable()) {
+                        event.setCancelled(true);
+                        return;
+                    }
+
+                    if (targetEquipment != null && !targetEquipment.isSlotMutable()) {
+                        event.setCancelled(true);
+                        return;
+                    }
+
+                    if (sourceId != null) {
+                        inventory.getPlayerEquipment().put(sourceId, targetSlot);
+                        inventory.setChanged(true);
+                    }
+
+                    if (targetId != null) {
+                        inventory.getPlayerEquipment().put(targetId, sourceSlot);
+                        inventory.setChanged(true);
+                    }
+                }
+                catch (Exception e) {
+                    event.setCancelled(true);
+                }
             }
         }
     }
@@ -151,7 +293,57 @@ public class LobbyPvpListener implements Listener {
     public void on(PlayerDropItemEvent event) {
         if (lobbyPvpManager.inZone(event.getPlayer().getUniqueId())) {
             if (gameManager.getGameState() == GameState.WAITING) {
-                event.setCancelled(true);
+                try {
+                    final Player player = event.getPlayer();
+
+                    final UhcPlayer uhcPlayer = gameManager.getPlayersManager().getUhcPlayer(player);
+                    final PlayerLobbyPvpInventory inventory = uhcPlayer.getLobbyPvpInventory();
+
+                    final EquipmentContainer equipmentContainer = gameManager.getLobbyPvpConfiguration().getEquipmentContainer();
+
+                    if (inventory.getCursorId() == null) {
+                        event.setCancelled(true);
+                        return;
+                    }
+
+                    String targetId = inventory.getItemId(equipmentContainer, inventory.getCursorSlot());
+                    if (targetId == null || targetId.equals(inventory.getCursorId())) {
+                        inventory.getCursorSlot().equip(player.getInventory(), event.getItemDrop().getItemStack());
+
+                        inventory.getPlayerEquipment().put(inventory.getCursorId(), inventory.getCursorSlot());
+                        inventory.setChanged(true);
+                        inventory.setSourceIndex(-1);
+                        inventory.setCursorId(null);
+                        inventory.setCursorSlot(null);
+
+                        event.getItemDrop().remove();
+                        return;
+                    }
+
+                    for (int i = 0; i < 41; i++) {
+                        final EquipmentSlot targetSlot = EquipmentUtils.from(i);
+                        if (targetSlot == null) continue;
+
+                        targetId = inventory.getItemId(equipmentContainer, targetSlot);
+                        if (targetId == null) {
+                            targetSlot.equip(player.getInventory(), event.getItemDrop().getItemStack());
+
+                            inventory.getPlayerEquipment().put(inventory.getCursorId(), targetSlot);
+                            inventory.setChanged(true);
+                            inventory.setSourceIndex(-1);
+                            inventory.setCursorId(null);
+                            inventory.setCursorSlot(null);
+
+                            event.getItemDrop().remove();
+                            return;
+                        }
+                    }
+
+                    event.getItemDrop().remove();
+                }
+                catch (Exception e) {
+                    event.setCancelled(true);
+                }
             }
         }
     }
@@ -163,6 +355,17 @@ public class LobbyPvpListener implements Listener {
 
             List<Player> playersInZone = lobbyPvpManager.stream().map(Bukkit::getPlayer).filter(Objects::nonNull).collect(Collectors.toList());
             for (Player player : playersInZone) {
+
+                try {
+                    final UhcPlayer uhcPlayer = gameManager.getPlayersManager().getUhcPlayer(player);
+                    uhcPlayer.getLobbyPvpInventory().endChanging(gameManager.getLobbyPvpConfiguration().getEquipmentContainer());
+                    if (uhcPlayer.getLobbyPvpInventory().isChanged()) {
+                        lobbyPvpManager.getDbLobbyPvp().save(uhcPlayer);
+                        uhcPlayer.getLobbyPvpInventory().setChanged(false);
+                    }
+                }
+                catch (Exception ignore) {}
+
                 lobbyPvpManager.justRemove(player.getUniqueId());
                 player.getInventory().clear();
                 player.setFoodLevel(20);
@@ -190,6 +393,15 @@ public class LobbyPvpListener implements Listener {
         if (inZone && !nowInZone) {
             GameState gameState = gameManager.getGameState();
             if (gameState == GameState.WAITING) this.lobbyPvpManager.removePlayer(player);
+
+            try {
+                final UhcPlayer uhcPlayer = gameManager.getPlayersManager().getUhcPlayer(player);
+                if (uhcPlayer.getLobbyPvpInventory().isChanged()) {
+                    lobbyPvpManager.getDbLobbyPvp().save(uhcPlayer);
+                    uhcPlayer.getLobbyPvpInventory().setChanged(false);
+                }
+            }
+            catch (Exception ignore) {}
         }
     }
 

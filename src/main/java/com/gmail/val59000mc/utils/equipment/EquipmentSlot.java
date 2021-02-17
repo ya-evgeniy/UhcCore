@@ -7,4 +7,6 @@ public interface EquipmentSlot {
 
     void equip(PlayerInventory inventory, ItemStack stack);
 
+    String buildId();
+
 }

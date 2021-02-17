@@ -19,11 +19,36 @@ public class StorageEquipmentSlot implements EquipmentSlot {
         Objects.requireNonNull(inventory, "Inventory cannot be null");
         Objects.requireNonNull(stack, "Stack cannot be null");
 
-        if (index > -1 && index < inventory.getSize() && index < 26) {
+        if (index > -1 && index < inventory.getSize() && index < 27) {
             inventory.setItem(index + 9, stack);
         }
         else {
             inventory.addItem(stack);
         }
+    }
+
+    @Override
+    public String buildId() {
+        return "storage." + index;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StorageEquipmentSlot that = (StorageEquipmentSlot) o;
+        return index == that.index;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(index);
+    }
+
+    @Override
+    public String toString() {
+        return "StorageEquipmentSlot{" +
+                "index=" + index +
+                '}';
     }
 }

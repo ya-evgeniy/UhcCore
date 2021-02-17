@@ -1,5 +1,5 @@
 {
-    "enabled": false,
+    "enabled": true,
 
     "use_custom_respawn_location": false,
     "custom_respawn_location": {
@@ -20,13 +20,13 @@
         {
             "type": "rectangle",
             "parameters": {
-                "x1": -9,
-                "y1": 200,
-                "z1": -9,
+                "x1": -101,
+                "y1": 195,
+                "z1": -151,
 
-                "x2": -2,
-                "y2": 207,
-                "z2": -2
+                "x2": 118,
+                "y2": 2,
+                "z2": 99
             }
         }
     ],
@@ -34,33 +34,102 @@
     "equipment__comment": "Available slots: [helmet, chestplate, leggings, boots, off_hand, hotbar.0-8, storage.0-26, inventory]",
     "equipment": [
         {
+            "id": "helmet",
+            "slot_mutable": false,
+
             "slot": "helmet",
-            "item": { "type": "minecraft:iron_helmet" }
+            "item": { "type": "minecraft:iron_helmet", "unbreakable":"true" }
         },
         {
+            "id": "chestplate",
+            "slot_mutable": false,
+
             "slot": "chestplate",
-            "item": { "type": "minecraft:iron_chestplate" }
+            "item": { "type": "minecraft:iron_chestplate", "unbreakable":"true" }
         },
         {
+            "id": "leggings",
+            "slot_mutable": false,
+
             "slot": "leggings",
-            "item": { "type": "minecraft:iron_leggings" }
+            "item": { "type": "minecraft:iron_leggings", "unbreakable":"true" }
         },
         {
+            "id": "boots",
+            "slot_mutable": false,
+
             "slot": "boots",
-            "item": { "type": "minecraft:iron_boots" }
+            "item": { "type": "minecraft:iron_boots", "unbreakable":"true" }
         },
         {
+            "id": "shield",
+            "slot_mutable": true,
+
             "slot": "offhand",
-            "item": { "type": "minecraft:shield" }
+            "item": { "type": "minecraft:shield","count": 1, "damage":306 }
         },
         {
+            "id": "sword",
+            "slot_mutable": true,
+
             "slot": "hotbar.0",
-            "item": { "type": "minecraft:iron_sword" }
+            "item": { "type": "minecraft:iron_sword", "unbreakable":"true" }
+        },
+        {
+            "id": "axe",
+            "slot_mutable": true,
+
+            "slot": "hotbar.1",
+            "item": { "type": "minecraft:iron_axe", "unbreakable":"true" }
+        },
+        {
+            "id": "bow",
+            "slot_mutable": true,
+
+            "slot": "hotbar.2",
+            "item": { "type": "minecraft:bow", "unbreakable":"true" }
+        },
+        {
+            "id": "fishing_rod",
+            "slot_mutable": true,
+
+            "slot": "hotbar.3",
+            "item": { "type": "minecraft:fishing_rod", "unbreakable":"true" }
+        },
+        {
+            "id": "golden_apple",
+            "slot_mutable": true,
+
+            "slot": "hotbar.4",
+            "item": { "type": "minecraft:golden_apple","count": 10 }
+        },
+        {
+            "id": "arrows",
+            "slot_mutable": true,
+
+            "slot": "hotbar.5",
+            "item": { "type": "minecraft:arrow","count": 64 }
         }
     ],
 
     "effects": [
-        { "id": "minecraft:saturation", "duration": 32766, "lvl": 1 }
-    ]
+        { "id": "minecraft:saturation", "duration": 99999, "lvl": 1 },
+        { "id": "minecraft:night_vision", "duration": 99999, "lvl": 1 }
+    ],
+
+    "database": {
+        "enabled": false,
+
+        "url": "jdbc:mysql://%s:%s/%s",
+
+        "ip": "",
+        "port": 3306,
+
+        "db": "",
+        "table": "uhccore_lobby_pvp_inventory",
+
+        "username": "",
+        "password": ""
+    }
 }
 

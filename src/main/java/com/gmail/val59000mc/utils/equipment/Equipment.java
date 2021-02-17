@@ -7,12 +7,26 @@ import java.util.Objects;
 
 public class Equipment {
 
+    private final String id;
+    private final boolean slotMutable;
+
     private final EquipmentSlot slot;
     private final ItemStack stack;
 
-    public Equipment(EquipmentSlot slot, ItemStack stack) {
+    public Equipment(String id, boolean slotMutable, EquipmentSlot slot, ItemStack stack) {
+        this.id = id;
+        this.slotMutable = slotMutable;
+
         this.slot = Objects.requireNonNull(slot, "Slot cannot be null");
         this.stack = Objects.requireNonNull(stack, "Stack cannot be null");
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public boolean isSlotMutable() {
+        return slotMutable;
     }
 
     public EquipmentSlot getSlot() {

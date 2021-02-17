@@ -173,6 +173,7 @@ public class PlayersManager{
 
 		GameManager gameManager = GameManager.getGameManager();
 		gameManager.getKitsManager().getDbKitUpgrades().load(newPlayer);
+		gameManager.getLobbyPvpManager().getDbLobbyPvp().load(newPlayer);
 
         return newPlayer;
     }
