@@ -545,7 +545,7 @@ public class PlayersManager{
 
 			Bukkit.getScheduler().runTaskLater(UhcCore.getPlugin(), new TeleportPlayersThread(GameManager.getGameManager(), team), delayTeleportByTeam);
 			Bukkit.getLogger().info("[UhcCore] Teleporting a team in "+delayTeleportByTeam+" ticks");
-			delayTeleportByTeam += 20;
+			delayTeleportByTeam += 200;
 		}
 
 		Bukkit.getScheduler().runTaskLater(UhcCore.getPlugin(), () -> GameManager.getGameManager().startWatchingEndOfGame(), delayTeleportByTeam + 20);
@@ -554,11 +554,11 @@ public class PlayersManager{
 
 	public void initializePlayer(Player player) {
 		UhcPlayer uhcPlayer = getUhcPlayer(player);
-		uhcPlayer.setNeedInitialize(false);
 
-		if (!uhcPlayer.getState().equals(PlayerState.PLAYING)) {
+		if (!uhcPlayer.isNeedInitialize()) {
 			return;
 		}
+		uhcPlayer.setNeedInitialize(false);
 
 		for(PotionEffect effect : GameManager.getGameManager().getConfiguration().getPotionEffectOnStart()){
 			player.addPotionEffect(effect);

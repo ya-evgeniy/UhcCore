@@ -27,6 +27,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.InventoryPickupItemEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 
@@ -356,6 +357,7 @@ public class LobbyPvpListener implements Listener {
 
             List<Player> playersInZone = lobbyPvpManager.stream().map(Bukkit::getPlayer).filter(Objects::nonNull).collect(Collectors.toList());
             for (Player player : playersInZone) {
+                player.setItemOnCursor(null);
 
                 try {
                     final UhcPlayer uhcPlayer = gameManager.getPlayersManager().getUhcPlayer(player);
@@ -402,12 +404,19 @@ public class LobbyPvpListener implements Listener {
             GameState gameState = gameManager.getGameState();
             if (gameState == GameState.WAITING) this.lobbyPvpManager.removePlayer(player);
 
+            player.setItemOnCursor(null);
+
             try {
                 final UhcPlayer uhcPlayer = gameManager.getPlayersManager().getUhcPlayer(player);
+                uhcPlayer.getLobbyPvpInventory().endChanging(gameManager.getLobbyPvpConfiguration().getEquipmentContainer());
                 if (uhcPlayer.getLobbyPvpInventory().isChanged()) {
                     lobbyPvpManager.getDbLobbyPvp().save(uhcPlayer);
                     uhcPlayer.getLobbyPvpInventory().setChanged(false);
                 }
+                final PlayerLobbyPvpInventory inventory = uhcPlayer.getLobbyPvpInventory();
+                inventory.setSourceIndex(-1);
+                inventory.setCursorId(null);
+                inventory.setCursorSlot(null);
             }
             catch (Exception ignore) {}
         }

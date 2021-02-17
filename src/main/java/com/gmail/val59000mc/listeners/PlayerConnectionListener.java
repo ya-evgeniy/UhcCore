@@ -61,7 +61,7 @@ public class PlayerConnectionListener implements Listener{
 		if (gameState == GameState.STARTING || gameState == GameState.PLAYING) {
 			if (uhcPlayer.getState().equals(PlayerState.PLAYING) && uhcPlayer.isNeedInitialize()) {
 				TeleportPlayersThread.teleportPlayer(uhcPlayer);
-				playersManager.initializePlayer(player);
+				if (gameState == GameState.PLAYING) playersManager.initializePlayer(player);
 			}
 		}
 

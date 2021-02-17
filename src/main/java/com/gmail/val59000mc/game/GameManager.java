@@ -489,6 +489,7 @@ public class GameManager{
 		listeners.add(new WorldListener());
 		listeners.add(new PlayerMovementListener(this, playerManager, configuration));
 		listeners.add(new EntityDamageListener(this));
+		listeners.add(new PlayerStatisticListener(this));
 		if (lobbyPvpConfiguration.isEnabled()) {
 			listeners.add(new LobbyPvpListener(this, lobbyPvpManager));
 		}
