@@ -44,6 +44,7 @@ public class Lang{
 	public static String PLAYERS_SEND_BUNGEE;
 	public static String PLAYERS_SEND_BUNGEE_NOW;
 	public static String PLAYERS_SEND_BUNGEE_DISABLED;
+	public static String PLAYER_KILL_PLAYER;
 
 
 	public static String DISPLAY_MESSAGE_PREFIX;
@@ -250,6 +251,7 @@ public class Lang{
 		PLAYERS_SEND_BUNGEE = getString(lang, "players.send-bungee", "&eSending you to the hub in %time%");
 		PLAYERS_SEND_BUNGEE_NOW = getString(lang, "players.send-bungee-now", "&eConnecting to Hub ...");
 		PLAYERS_SEND_BUNGEE_DISABLED = getString(lang, "players.send-bungee-disabled", "&cThis command is disabled");
+		PLAYER_KILL_PLAYER = getString(lang, "players.send-bungee-disabled", "&f%killer% &fубил &f%player%");
 
 		// Display
 		DISPLAY_MESSAGE_PREFIX = getString(lang, "display.message-prefix", "&a[UhcCore]&r");

@@ -7,6 +7,7 @@ import com.gmail.val59000mc.events.UhcLobbyPlayerDamageEvent;
 import com.gmail.val59000mc.events.UhcLobbyPlayerKilledByPlayerEvent;
 import com.gmail.val59000mc.game.GameManager;
 import com.gmail.val59000mc.game.GameState;
+import com.gmail.val59000mc.languages.Lang;
 import com.gmail.val59000mc.lobby.pvp.LobbyPvpManager;
 import com.gmail.val59000mc.lobby.pvp.PlayerLobbyPvpInventory;
 import com.gmail.val59000mc.players.UhcPlayer;
@@ -372,6 +373,13 @@ public class LobbyPvpListener implements Listener {
                 player.setSaturation(20);
                 player.setHealth(20.0);
             }
+        }
+    }
+
+    @EventHandler
+    public void on(UhcLobbyPlayerKilledByPlayerEvent event) {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.sendMessage(Lang.PLAYER_KILL_PLAYER.replace("%killer%", event.getKiller().getName()).replace("%player%", event.getPlayer().getName()));
         }
     }
 
