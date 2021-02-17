@@ -555,10 +555,15 @@ public class PlayersManager{
 	public void initializePlayer(Player player) {
 		UhcPlayer uhcPlayer = getUhcPlayer(player);
 
+		if (uhcPlayer.getState() == PlayerState.DEAD) {
+			GameManager.getGameManager().getPlayersManager().setPlayerSpectateAtLobby(uhcPlayer);
+			uhcPlayer.setNeedInitialize(false);
+			return;
+		}
+
 		if (!uhcPlayer.isNeedInitialize()) {
 			return;
 		}
-		uhcPlayer.setNeedInitialize(false);
 
 		for(PotionEffect effect : GameManager.getGameManager().getConfiguration().getPotionEffectOnStart()){
 			player.addPotionEffect(effect);
@@ -732,9 +737,11 @@ public class PlayersManager{
 					playingPlayers++;
 					teamIsPlaying = 1;
 					try{
-						player.getPlayer();
-						playingPlayersOnline++;
-						teamIsOnline = 1;
+						final Player onlinePlayer = player.getPlayer();
+						if (onlinePlayer.getGameMode() == GameMode.SURVIVAL) {
+							playingPlayersOnline++;
+							teamIsOnline = 1;
+						}
 					}catch(UhcPlayerNotOnlineException e){
 						// Player isn't online
 					}
